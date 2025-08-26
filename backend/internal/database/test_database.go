@@ -6,6 +6,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -28,7 +29,8 @@ func SetupTestDB() (*gorm.DB, error) {
 	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
 	dbName := testconfig.GetStringEnv("DB_NAME", "money_management_test")
 
-	dsn := dbUser + ":" + dbPassword + "@tcp(" + dbHost + ":" + dbPort + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
+		dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	var db *gorm.DB
 	var err error
