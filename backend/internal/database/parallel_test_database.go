@@ -16,8 +16,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"money_management/internal/config"
 	"money_management/internal/models"
-	"money_management/testconfig"
 )
 
 // ParallelTestDBManager 並列テスト用DB管理
@@ -36,7 +36,7 @@ var (
 func GetParallelTestDBManager() *ParallelTestDBManager {
 	dbManagerOnce.Do(func() {
 		// 環境変数からポート取得（デフォルトは3306）
-		port := testconfig.GetIntEnv("DB_PORT", 3306)
+		port := config.GetIntEnv("DB_PORT", 3306)
 		dbManager = &ParallelTestDBManager{
 			databases: make(map[string]*gorm.DB),
 			basePort:  port,
@@ -79,10 +79,10 @@ func SetupParallelTestDB(testName string) (*gorm.DB, error) {
 // createParallelTestDB 並列テスト用データベースの実際の作成
 func createParallelTestDB(dbName string) (*gorm.DB, error) {
 	// 環境変数からDB接続情報を取得
-	dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
-	dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
-	dbUser := testconfig.GetStringEnv("DB_USER", "root")
-	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
+	dbHost := config.GetStringEnv("DB_HOST", "localhost")
+	dbPort := config.GetStringEnv("DB_PORT", "3306")
+	dbUser := config.GetStringEnv("DB_USER", "root")
+	dbPassword := config.GetStringEnv("DB_PASSWORD", "root_test_password")
 
 	// テスト用データベース接続文字列（独立したDB名使用）
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
@@ -134,17 +134,18 @@ func createParallelTestDB(dbName string) (*gorm.DB, error) {
 	}
 
 	// 接続プールの並列テスト用最適化
-	config := testconfig.GetGlobalConfig()
+	databaseMaxConns := config.GetIntEnv("TEST_DB_MAX_CONNS", 20)
+	connMaxLifetimeSeconds := config.GetIntEnv("TEST_DB_CONN_LIFETIME", 300)
 	if sqlDB, err := db.DB(); err == nil {
 		// 並列実行用に接続数を削減（競合回避）
-		maxConns := config.DatabaseMaxConns / 4 // 並列テスト用に1/4に削減
+		maxConns := databaseMaxConns / 4 // 並列テスト用に1/4に削減
 		if maxConns < 2 {
 			maxConns = 2
 		}
 
 		sqlDB.SetMaxOpenConns(maxConns)
 		sqlDB.SetMaxIdleConns(maxConns / 2)
-		sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
+		sqlDB.SetConnMaxLifetime(time.Duration(connMaxLifetimeSeconds) * time.Second)
 	}
 
 	// テーブル作成
@@ -183,10 +184,10 @@ func CleanupParallelTestDB(db *gorm.DB, testName string) error {
 	// データベースを削除（並列テスト後のクリーンアップ）
 	if dbName != "" && dbName != "mysql" {
 		// 環境変数からDB接続情報を取得
-		dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
-		dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
-		dbUser := testconfig.GetStringEnv("DB_USER", "root")
-		dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
+		dbHost := config.GetStringEnv("DB_HOST", "localhost")
+		dbPort := config.GetStringEnv("DB_PORT", "3306")
+		dbUser := config.GetStringEnv("DB_USER", "root")
+		dbPassword := config.GetStringEnv("DB_PASSWORD", "root_test_password")
 
 		tempDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
 			dbUser, dbPassword, dbHost, dbPort)
@@ -243,8 +244,7 @@ func sanitizeName(name string) string {
 func IsParallelTestEnabled() bool {
 	// 環境変数で並列テストの有効/無効を制御
 	// export ENABLE_PARALLEL_TESTS=true で有効化
-	config := testconfig.GetGlobalConfig()
-	return config.ParallelTestEnabled
+	return config.GetBoolEnv("ENABLE_PARALLEL_TESTS", false)
 }
 
 // SetupOptimizedTestDB 最適化されたテスト用DB接続（並列/非並列自動判定）

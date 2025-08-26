@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"money_management/testconfig"
+	"money_management/internal/config"
 )
 
 // PoolOptimizer 接続プール最適化器
@@ -77,12 +77,13 @@ func NewPoolOptimizer(db *gorm.DB) *PoolOptimizer {
 
 // getDefaultPoolConfig デフォルト接続プール設定
 func getDefaultPoolConfig() *PoolConfig {
-	testConfig := testconfig.GetGlobalConfig()
+	// 環境変数から設定を直接取得（循環インポートを避けるため）
+	useInMemoryDB := config.GetBoolEnv("USE_INMEMORY_DB", false)
 
 	// 環境に応じた基本設定
 	var baseConfig PoolConfig
 
-	if testConfig.UseInMemoryDB {
+	if useInMemoryDB {
 		// SQLite in-memory用設定
 		baseConfig = PoolConfig{
 			MinConnections:  1,
@@ -136,8 +137,8 @@ func (po *PoolOptimizer) OptimizeConnections(ctx context.Context) error {
 
 	po.lastOptimization = time.Now()
 
-	testConfig := testconfig.GetGlobalConfig()
-	if testConfig.VerboseLogging {
+	verboseLogging := config.GetBoolEnv("TEST_VERBOSE_LOGGING", false)
+	if verboseLogging {
 		po.logOptimizationResult(optimization)
 	}
 

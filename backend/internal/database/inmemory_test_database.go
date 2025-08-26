@@ -15,8 +15,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"money_management/internal/config"
 	"money_management/internal/models"
-	"money_management/testconfig"
 )
 
 // InMemoryDBManager インメモリDB管理
@@ -140,8 +140,8 @@ func SetupInMemoryTestDB(testName string) (*gorm.DB, error) {
 	// 管理マップに登録
 	manager.databases[dbName] = db
 
-	config := testconfig.GetGlobalConfig()
-	if config.VerboseLogging {
+	verboseLogging := config.GetBoolEnv("TEST_VERBOSE_LOGGING", false)
+	if verboseLogging {
 		log.Printf("⚡ インメモリテストDB作成完了: %s (SQLite in-memory)", dbName)
 	}
 
@@ -169,8 +169,8 @@ func CleanupInMemoryTestDB(db *gorm.DB, testName string) error {
 		if managedDB == db {
 			delete(manager.databases, key)
 
-			config := testconfig.GetGlobalConfig()
-			if config.VerboseLogging {
+			verboseLogging := config.GetBoolEnv("TEST_VERBOSE_LOGGING", false)
+			if verboseLogging {
 				log.Printf("⚡ インメモリテストDB削除完了: %s", key)
 			}
 			break
@@ -183,10 +183,11 @@ func CleanupInMemoryTestDB(db *gorm.DB, testName string) error {
 // SetupLightweightTestDB 軽量テスト用DB接続（自動選択）
 // 環境変数 USE_INMEMORY_DB=true でインメモリDB使用
 func SetupLightweightTestDB(testName string) (*gorm.DB, func(), error) {
-	config := testconfig.GetGlobalConfig()
+	useInMemoryDB := config.GetBoolEnv("USE_INMEMORY_DB", false)
+	parallelTestEnabled := config.GetBoolEnv("ENABLE_PARALLEL_TESTS", false)
 
 	// インメモリDBを使用するかチェック
-	if config.UseInMemoryDB {
+	if useInMemoryDB {
 		// 超高速インメモリDB使用
 		db, err := SetupInMemoryTestDB(testName)
 		if err != nil {
@@ -201,7 +202,7 @@ func SetupLightweightTestDB(testName string) (*gorm.DB, func(), error) {
 	}
 
 	// 並列テスト有効の場合は独立MySQL使用
-	if config.ParallelTestEnabled {
+	if parallelTestEnabled {
 		return SetupOptimizedTestDB(testName)
 	}
 
@@ -260,6 +261,5 @@ func BenchmarkInMemoryVsMySQL(testName string) (memoryTime, mysqlTime time.Durat
 
 // IsInMemoryDBEnabled インメモリDBが有効かチェック
 func IsInMemoryDBEnabled() bool {
-	config := testconfig.GetGlobalConfig()
-	return config.UseInMemoryDB
+	return config.GetBoolEnv("USE_INMEMORY_DB", false)
 }

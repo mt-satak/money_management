@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"money_management/testconfig"
+	testingutil "money_management/internal/testing"
 )
 
 // TestConnectionPoolOptimization_BasicFunctionality 基本的な接続プール最適化テスト
@@ -317,7 +317,7 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	optimizer := NewPoolOptimizer(db)
 
 	// メトリクス統合テスト
-	collector := testconfig.GetMetricsCollector()
+	collector := testingutil.GetMetricsCollector()
 	session := collector.StartTest("ConnectionPoolOptimizationTest", "pool", "optimization")
 
 	// 最適化実行
@@ -326,7 +326,7 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	err = optimizer.OptimizeConnections(ctx)
 	duration := time.Since(start)
 
-	session.AddAssertion("optimization_success", err == nil)
+	session.AddAssertion(err == nil)
 	session.SetMetadata("optimization_duration_ms", fmt.Sprintf("%d", duration.Milliseconds()))
 
 	// 現在のプール状態をメタデータに記録
@@ -336,9 +336,9 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	session.SetMetadata("cpu_usage", fmt.Sprintf("%.1f", resources.CPUUsage*100))
 
 	if err == nil {
-		session.End(testconfig.StatusPassed, "")
+		session.End(testingutil.StatusPassed, "")
 	} else {
-		session.End(testconfig.StatusFailed, err.Error())
+		session.End(testingutil.StatusFailed, err.Error())
 	}
 
 	t.Logf("📊 接続プール最適化メトリクス記録完了")
