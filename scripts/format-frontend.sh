@@ -4,6 +4,13 @@
 # エラーハンドリングの有効化
 set -e
 
+# スクリプトの実行権限をチェック
+if [ ! -x "$0" ]; then
+    echo "❌ エラー: このスクリプトに実行権限がありません。"
+    echo "   解決方法: chmod +x $0"
+    exit 1
+fi
+
 # フロントエンドディレクトリの存在チェック
 if [ ! -d "frontend" ]; then
     echo "❌ エラー: frontendディレクトリが見つかりません。"
@@ -46,8 +53,9 @@ done
 # ファイルがある場合のみPrettierを実行
 if [ ${#files[@]} -gt 0 ]; then
     echo "   🚀 Prettierを実行中..."
-    npx prettier --write "${files[@]}" || {
+    npx --no-install prettier --write "${files[@]}" || {
         echo "❌ エラー: Prettierの実行に失敗しました。"
+        echo "   Prettierがローカルにインストールされているか確認してください。"
         exit 1
     }
     echo "✅ フロントエンドコードフォーマット完了 (${#files[@]}ファイル処理)"
