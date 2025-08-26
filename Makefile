@@ -206,7 +206,7 @@ clean:
 
 # よく使うコマンドのエイリアス
 md: docs-markdown
-json: docs-openapi  
+json: docs-openapi
 yaml: docs-yaml
 tc: test-contract
 ts: test-short

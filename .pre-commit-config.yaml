@@ -1,0 +1,53 @@
+# ==============================================
+# Pre-commit hooks configuration
+# Money Management Application
+# ==============================================
+
+repos:
+  # Basic hooks for general file cleanup
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        args: ["--fix=lf"]
+
+  # Go-specific formatting
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: Go Format
+        entry: bash -c 'for file in "$@"; do gofmt -w "$file"; done' --
+        language: system
+        files: '\.go$'
+        pass_filenames: true
+        description: Format Go code using gofmt
+
+  # Frontend formatting using Prettier
+  - repo: local
+    hooks:
+      - id: prettier-frontend
+        name: Prettier (Frontend)
+        entry: bash -c 'cd frontend && for file in "$@"; do file_rel=${file#frontend/}; npx prettier --write "$file_rel"; done' --
+        language: system
+        files: '^frontend/.*\.(ts|tsx|js|jsx|css|scss|json|html|md)$'
+        pass_filenames: true
+        description: Format frontend files using Prettier
+
+  # YAML/JSON formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        name: Prettier (YAML/JSON)
+        files: '\.(yaml|yml|json)$'
+        exclude: '^frontend/(package-lock\.json|dist/)'
+        description: Format YAML and JSON files
+
+# Configuration
+default_stages: [pre-commit]
+fail_fast: false
