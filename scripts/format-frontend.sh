@@ -56,3 +56,5 @@ if [ ${#files[@]} -gt 0 ]; then
 else
     echo "⚠️  処理対象のファイルがありませんでした。"
 fi
+
+)

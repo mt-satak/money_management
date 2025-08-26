@@ -164,7 +164,7 @@ jobs:
           NODE_ENV: test
         run: |
           echo "🧪 Running frontend unit tests..."
-          npm run test:unit -- --run
+          npm run test:unit
 
       - name: "Build Frontend"
         working-directory: frontend
