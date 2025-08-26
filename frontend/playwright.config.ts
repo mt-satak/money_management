@@ -38,38 +38,62 @@ export default defineConfig({
     /* Browser context options for stability */
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
-
-    /* Optimized for parallel execution */
-    launchOptions: {
-      args: [
-        "--disable-gpu",
-        "--disable-web-security",
-        "--allow-running-insecure-content",
-        "--disable-features=TranslateUI,BlinkGenPropertyTrees",
-      ],
-    },
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        /* Chromium-specific launch options */
+        launchOptions: {
+          args: [
+            "--disable-gpu",
+            "--disable-web-security",
+            "--allow-running-insecure-content",
+            "--disable-features=TranslateUI,BlinkGenPropertyTrees",
+          ],
+        },
+      },
     },
 
     {
       name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      use: {
+        ...devices["Desktop Safari"],
+        /* WebKit-specific launch options (minimal for compatibility) */
+        launchOptions: {
+          args: ["--disable-web-security", "--allow-running-insecure-content"],
+        },
+      },
     },
 
     /* Test against mobile viewports. */
     {
       name: "Mobile Chrome",
-      use: { ...devices["Pixel 5"] },
+      use: {
+        ...devices["Pixel 5"],
+        /* Mobile Chrome-specific launch options */
+        launchOptions: {
+          args: [
+            "--disable-gpu",
+            "--disable-web-security",
+            "--allow-running-insecure-content",
+            "--disable-features=TranslateUI,BlinkGenPropertyTrees",
+          ],
+        },
+      },
     },
     {
       name: "Mobile Safari",
-      use: { ...devices["iPhone 12"] },
+      use: {
+        ...devices["iPhone 12"],
+        /* Mobile Safari-specific launch options (minimal for compatibility) */
+        launchOptions: {
+          args: ["--disable-web-security", "--allow-running-insecure-content"],
+        },
+      },
     },
 
     /* Test against branded browsers. */
