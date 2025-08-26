@@ -90,7 +90,10 @@ jobs:
 
       - name: "Download Go Dependencies"
         working-directory: backend
-        run: go mod download
+        run: |
+          echo "📦 Go依存関係をダウンロード中..."
+          go mod download
+          go mod tidy
 
       - name: "Run Unit Tests"
         if: matrix.test-type == 'unit'
@@ -184,9 +187,11 @@ jobs:
 
       - name: "Run Frontend Unit Tests with Coverage"
         working-directory: frontend
+        env:
+          NODE_ENV: test
         run: |
           echo "🧪 Running frontend unit tests with coverage..."
-          npm run test:unit:coverage
+          npm run test:unit:coverage -- --run
 
       - name: "Cache Vite Build"
         uses: actions/cache@v4
@@ -240,7 +245,7 @@ jobs:
 
       - name: "Cache Playwright Browsers"
         uses: actions/cache@v4
-        id: playwright-cache-${{ matrix.test-group }}
+        id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ matrix.test-group }}-${{ hashFiles('frontend/package-lock.json') }}
@@ -251,7 +256,7 @@ jobs:
       - name: "Install Playwright Browsers"
         working-directory: frontend
         run: |
-          if [ "${{ steps.playwright-cache-${{ matrix.test-group }}.outputs.cache-hit }}" = "true" ]; then
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
             echo "🎭 Playwrightブラウザ (${{ matrix.test-group }}) がキャッシュから復元されました"
           else
             echo "🎭 Playwrightブラウザ (${{ matrix.test-group }}) をインストール中..."
@@ -273,31 +278,37 @@ jobs:
       - name: "Start Test Environment"
         run: |
           echo "🚀 Starting full test environment..."
-          docker-compose -f docker-compose.test.yml pull
-          docker-compose -f docker-compose.test.yml up -d --wait
-          echo "⏰ Waiting for services to be ready..."
-          sleep 20
+          if [ -f "docker-compose.test.yml" ]; then
+            docker-compose -f docker-compose.test.yml pull
+            docker-compose -f docker-compose.test.yml up -d --wait
+            echo "⏰ Waiting for services to be ready..."
+            sleep 20
+          else
+            echo "⚠️ docker-compose.test.yml not found, using default"
+            docker-compose up -d --wait
+            sleep 20
+          fi
 
       - name: "Run Smoke Tests"
         if: matrix.test-group == 'smoke'
         working-directory: frontend
         run: |
           echo "🔥 Running smoke tests..."
-          npm run test:e2e:smoke
+          npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
 
       - name: "Run Regression Tests"
         if: matrix.test-group == 'regression'
         working-directory: frontend
         run: |
           echo "🔄 Running regression tests..."
-          npm run test:e2e:regression
+          npx playwright test tests/e2e/complete-user-flow.spec.ts --reporter=list
 
       - name: "Run Integration Tests"
         if: matrix.test-group == 'integration'
         working-directory: frontend
         run: |
           echo "🔗 Running integration tests..."
-          npm run test:e2e:integration
+          npx playwright test tests/e2e/navigation-fixes.spec.ts tests/e2e/payer-bills-display.spec.ts --reporter=list
 
       - name: "Run Visual Regression Tests"
         if: matrix.test-group == 'visual'
@@ -306,14 +317,14 @@ jobs:
           VISUAL_REGRESSION: "true"
         run: |
           echo "👁️ Running visual regression tests..."
-          npm run test:e2e:visual
+          npx playwright test tests/e2e/visual-regression.spec.ts --reporter=list
 
       - name: "Run Performance Tests"
         if: matrix.test-group == 'performance'
         working-directory: frontend
         run: |
           echo "⚡ Running performance tests..."
-          npm run test:e2e:performance
+          npx playwright test tests/e2e/test-suite-optimization.spec.ts --reporter=list
 
       - name: "Upload Playwright Report"
         uses: actions/upload-artifact@v4
@@ -325,7 +336,12 @@ jobs:
 
       - name: "Cleanup Test Environment"
         if: always()
-        run: docker-compose -f docker-compose.test.yml down -v
+        run: |
+          if [ -f "docker-compose.test.yml" ]; then
+            docker-compose -f docker-compose.test.yml down -v
+          else
+            docker-compose down -v
+          fi
 
   # =======================================================
   # セキュリティ&品質監査
