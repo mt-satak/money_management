@@ -172,7 +172,11 @@ describe("ナビゲーション・ルーティング修正テスト", () => {
       await waitFor(() => {
         expect(screen.getByText("💰 家計簿アプリ")).toBeInTheDocument();
         expect(
-          screen.getByText(/こんにちは、.*テストユーザー.*さん/),
+          screen.getAllByText((content, element) =>
+            /こんにちは、.*テストユーザー.*さん/.test(
+              element?.textContent || "",
+            ),
+          )[0],
         ).toBeInTheDocument();
       });
     });
@@ -201,7 +205,11 @@ describe("ナビゲーション・ルーティング修正テスト", () => {
       // 認証済みユーザー向けの画面が表示される
       await waitFor(() => {
         expect(
-          screen.getByText(/こんにちは、.*テストユーザー.*さん/),
+          screen.getAllByText((content, element) =>
+            /こんにちは、.*テストユーザー.*さん/.test(
+              element?.textContent || "",
+            ),
+          )[0],
         ).toBeInTheDocument();
       });
     });
@@ -223,7 +231,11 @@ describe("ナビゲーション・ルーティング修正テスト", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/こんにちは、.*テストユーザー.*さん/),
+          screen.getAllByText((content, element) =>
+            /こんにちは、.*テストユーザー.*さん/.test(
+              element?.textContent || "",
+            ),
+          )[0],
         ).toBeInTheDocument();
       });
 
