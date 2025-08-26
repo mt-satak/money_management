@@ -35,9 +35,11 @@ var (
 // GetParallelTestDBManager 並列テスト用DB管理インスタンスを取得
 func GetParallelTestDBManager() *ParallelTestDBManager {
 	dbManagerOnce.Do(func() {
+		// 環境変数からポート取得（デフォルトは3306）
+		port := testconfig.GetIntEnv("DB_PORT", 3306)
 		dbManager = &ParallelTestDBManager{
 			databases: make(map[string]*gorm.DB),
-			basePort:  3307,
+			basePort:  port,
 		}
 	})
 	return dbManager
@@ -76,11 +78,19 @@ func SetupParallelTestDB(testName string) (*gorm.DB, error) {
 
 // createParallelTestDB 並列テスト用データベースの実際の作成
 func createParallelTestDB(dbName string) (*gorm.DB, error) {
+	// 環境変数からDB接続情報を取得
+	dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
+	dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
+	dbUser := testconfig.GetStringEnv("DB_USER", "root")
+	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "testpassword")
+
 	// テスト用データベース接続文字列（独立したDB名使用）
-	dsn := fmt.Sprintf("root:testpassword@tcp(localhost:3307)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo", dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
+		dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	// まず、データベースを作成するための接続
-	createDSN := "root:testpassword@tcp(localhost:3307)/?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
+	createDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
+		dbUser, dbPassword, dbHost, dbPort)
 
 	// データベース作成用の一時接続
 	tempDB, err := gorm.Open(mysql.Open(createDSN), &gorm.Config{
@@ -172,7 +182,14 @@ func CleanupParallelTestDB(db *gorm.DB, testName string) error {
 
 	// データベースを削除（並列テスト後のクリーンアップ）
 	if dbName != "" && dbName != "mysql" {
-		tempDSN := "root:testpassword@tcp(localhost:3307)/?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
+		// 環境変数からDB接続情報を取得
+		dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
+		dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
+		dbUser := testconfig.GetStringEnv("DB_USER", "root")
+		dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "testpassword")
+
+		tempDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
+			dbUser, dbPassword, dbHost, dbPort)
 		tempDB, err := gorm.Open(mysql.Open(tempDSN), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Silent),
 		})
