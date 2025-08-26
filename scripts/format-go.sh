@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Go code formatting script for pre-commit hook
 
 # エラーハンドリングの有効化

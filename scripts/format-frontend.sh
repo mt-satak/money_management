@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Frontend code formatting script for pre-commit hook using Prettier
 
 # エラーハンドリングの有効化
