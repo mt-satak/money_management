@@ -115,7 +115,7 @@ jobs:
           DB_PORT: 3306
           DB_NAME: money_management_test
           DB_USER: root
-          DB_PASSWORD: root
+          DB_PASSWORD: root_test_password
         run: |
           echo "🔄 Running integration tests..."
           go test -v -tags=integration ./internal/...
@@ -450,7 +450,7 @@ jobs:
           DB_PORT: 3306
           DB_NAME: money_management_test
           DB_USER: root
-          DB_PASSWORD: root
+          DB_PASSWORD: root_test_password
         run: |
           echo "⚡ Running performance benchmarks..."
           go test -bench=. -benchmem -run=^$ ./... || echo "No benchmarks found"

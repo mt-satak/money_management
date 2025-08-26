@@ -82,7 +82,7 @@ func createParallelTestDB(dbName string) (*gorm.DB, error) {
 	dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
 	dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
 	dbUser := testconfig.GetStringEnv("DB_USER", "root")
-	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root")
+	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
 
 	// テスト用データベース接続文字列（独立したDB名使用）
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
@@ -186,7 +186,7 @@ func CleanupParallelTestDB(db *gorm.DB, testName string) error {
 		dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
 		dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
 		dbUser := testconfig.GetStringEnv("DB_USER", "root")
-		dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root")
+		dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
 
 		tempDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Asia%%2FTokyo",
 			dbUser, dbPassword, dbHost, dbPort)

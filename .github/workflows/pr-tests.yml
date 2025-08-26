@@ -95,7 +95,7 @@ jobs:
           DB_PORT: 3306
           DB_NAME: money_management_test
           DB_USER: root
-          DB_PASSWORD: root
+          DB_PASSWORD: root_test_password
         run: |
           echo "🧪 Running backend tests..."
           go test -v -short ./...
@@ -108,7 +108,7 @@ jobs:
           DB_PORT: 3306
           DB_NAME: money_management_test
           DB_USER: root
-          DB_PASSWORD: root
+          DB_PASSWORD: root_test_password
         run: |
           echo "📊 Running tests with coverage..."
           go test -v -short -coverprofile=coverage.out ./...
