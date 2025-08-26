@@ -1,0 +1,44 @@
+# 機微情報とセキュリティファイル
+secrets/
+ssl/
+.env
+.env.*
+
+# 開発・テスト関連
+*.test
+*_test.go
+test-*
+coverage.*
+.coverage
+
+# ドキュメント・設定ファイル
+*.md
+.git/
+.gitignore
+.gitattributes
+
+# IDE・エディター設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ログファイル
+*.log
+logs/
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# 依存関係キャッシュ（ビルド内で管理）
+vendor/
+
+# Docker関連
+Dockerfile*
+docker-compose*.yml
+.dockerignore

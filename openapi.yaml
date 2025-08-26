@@ -1,0 +1,616 @@
+openapi: 3.0.3
+info:
+  title: Money Management API（セキュリティ強化版）
+  description: |
+    家計簿管理システムのセキュリティ強化されたRESTful API仕様書
+
+    # 概要
+    本APIは家計簿の作成、編集、請求、支払い、削除機能、およびセキュリティ機能を提供します。
+
+    # 主要機能
+    - JWT認証システム（セキュリティ強化済み）
+    - 月次家計簿管理（CRUD操作）
+    - 重複作成防止
+    - 権限制御（請求者・支払者別）
+    - ワークフロー管理（pending→requested→paid）
+    - セキュリティ監視・管理機能
+
+    # 認証
+    JWT (JSON Web Token) ベースの認証を使用します。
+
+    # セキュリティ実装状況（Phase 3 完了）
+    ✅ 本番環境対応済み：JWT認証強化・CSRF保護・レート制限・HTTPS対応・セキュリティヘッダー・入力値検証・エラーハンドリング・コンテナセキュリティ
+
+    # 品質保証
+    本仕様書は実装コードに基づいて作成されており、継続的な品質保証システム（Backend 73テスト・Frontend 268テスト）によって整合性が維持されています。
+  version: 2.0.0
+  contact:
+    name: Money Management Team
+    email: support@moneymanagement.com
+
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+  - url: https://localhost:443
+    description: HTTPS環境（本番対応）
+
+security:
+  - bearerAuth: []
+    csrfToken: []
+
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      tags:
+        - セキュリティ・監視
+      security: []
+      responses:
+        '200':
+          description: 正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: 家計簿API稼働中
+
+  /api/csrf-token:
+    get:
+      summary: CSRFトークン取得
+      tags:
+        - セキュリティ・監視
+      security: []
+      responses:
+        '200':
+          description: CSRFトークン
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrf_token:
+                    type: string
+                    example: MjQyODM0NzQ2NzQ4NzY4NzQ2NzQ2NzQ2NzQ2NzQ2
+
+  /api/security-status:
+    get:
+      summary: セキュリティ監視情報
+      tags:
+        - セキュリティ・監視
+      security: []
+      responses:
+        '200':
+          description: セキュリティ状況
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rate_limit:
+                    type: object
+                    properties:
+                      general_clients:
+                        type: integer
+                      auth_clients:
+                        type: integer
+                      create_clients:
+                        type: integer
+                      limits:
+                        type: object
+                        properties:
+                          general:
+                            type: object
+                            properties:
+                              requests_per_minute:
+                                type: integer
+                              burst:
+                                type: integer
+                  token_blacklist:
+                    type: object
+                    properties:
+                      total_tokens:
+                        type: integer
+                      valid_tokens:
+                        type: integer
+                      expired_tokens:
+                        type: integer
+
+  /api/auth/register:
+    post:
+      summary: 新規ユーザー登録
+      tags:
+        - 認証
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - account_id
+                - password
+              properties:
+                name:
+                  type: string
+                  example: 山田太郎
+                account_id:
+                  type: string
+                  example: yamada_taro
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: レート制限超過
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      summary: ログイン
+      tags:
+        - 認証
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - account_id
+                - password
+              properties:
+                account_id:
+                  type: string
+                  example: yamada_taro
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: レート制限超過
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      summary: 現在ユーザー情報取得
+      tags:
+        - 認証
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout:
+    post:
+      summary: ログアウト（現在トークン無効化）
+      tags:
+        - 認証
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: ログアウトしました
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout-all:
+    post:
+      summary: 全デバイスログアウト
+      tags:
+        - 認証
+      responses:
+        '200':
+          description: 全ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: すべてのデバイスからログアウトしました
+
+  /api/auth/token-status:
+    get:
+      summary: トークンステータス確認
+      tags:
+        - 認証
+      responses:
+        '200':
+          description: トークン状況
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  user_id:
+                    type: integer
+                  expires_at:
+                    type: string
+                    format: date-time
+
+  /api/users:
+    get:
+      summary: ユーザー一覧取得
+      tags:
+        - ユーザー管理
+      responses:
+        '200':
+          description: ユーザー一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+  /api/bills:
+    get:
+      summary: 家計簿一覧取得
+      tags:
+        - 家計簿管理
+      responses:
+        '200':
+          description: 家計簿一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BillResponse'
+    post:
+      summary: 家計簿作成
+      tags:
+        - 家計簿管理
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - year
+                - month
+                - payer_id
+              properties:
+                year:
+                  type: integer
+                  example: 2024
+                month:
+                  type: integer
+                  example: 3
+                payer_id:
+                  type: integer
+                  example: 2
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillResponse'
+        '409':
+          description: 重複エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bills/{year}/{month}:
+    get:
+      summary: 特定年月家計簿取得
+      tags:
+        - 家計簿管理
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 家計簿詳細
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BillResponse'
+                  - type: object
+                    properties:
+                      bill:
+                        type: 'null'
+
+  /api/bills/{id}/items:
+    put:
+      summary: 家計簿項目更新
+      tags:
+        - 家計簿管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      item_name:
+                        type: string
+                      amount:
+                        type: number
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillResponse'
+
+  /api/bills/{id}/request:
+    put:
+      summary: 請求確定
+      tags:
+        - 家計簿管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 請求確定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 家計簿の請求が確定しました
+
+  /api/bills/{id}/payment:
+    put:
+      summary: 支払確定
+      tags:
+        - 家計簿管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 支払確定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 支払いが確定しました
+
+  /api/bills/{id}:
+    delete:
+      summary: 家計簿削除
+      tags:
+        - 家計簿管理
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 家計簿を削除しました
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        account_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BillItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        bill_id:
+          type: integer
+        item_name:
+          type: string
+        amount:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MonthlyBill:
+      type: object
+      properties:
+        id:
+          type: integer
+        year:
+          type: integer
+        month:
+          type: integer
+        requester_id:
+          type: integer
+        payer_id:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - requested
+            - paid
+        request_date:
+          type: string
+          format: date-time
+          nullable: true
+        payment_date:
+          type: string
+          format: date-time
+          nullable: true
+        requester:
+          $ref: '#/components/schemas/User'
+        payer:
+          $ref: '#/components/schemas/User'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillItem'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BillResponse:
+      allOf:
+        - $ref: '#/components/schemas/MonthlyBill'
+        - type: object
+          properties:
+            total_amount:
+              type: number
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+tags:
+  - name: セキュリティ・監視
+    description: ヘルスチェック・CSRF・セキュリティ監視
+  - name: 認証
+    description: ユーザー認証・JWT管理
+  - name: ユーザー管理
+    description: ユーザー情報管理
+  - name: 家計簿管理
+    description: 家計簿CRUD・ワークフロー

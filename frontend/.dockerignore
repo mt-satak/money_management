@@ -1,0 +1,53 @@
+# 機微情報
+.env
+.env.*
+secrets/
+
+# 開発・テスト関連
+src/**/*.test.ts
+src/**/*.test.tsx
+src/**/*.spec.ts
+src/**/*.spec.tsx
+**/__tests__/
+**/test/
+coverage/
+.nyc_output
+
+# ビルド成果物（ビルド内で生成）
+dist/
+build/
+
+# 依存関係
+node_modules/
+
+# ドキュメント・設定
+*.md
+.git/
+.gitignore
+
+# IDE・エディター
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ログファイル
+*.log
+logs/
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Docker関連
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# 開発用設定
+vite.config.ts
+tsconfig.json
+postcss.config.js
+tailwind.config.js

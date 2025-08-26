@@ -1,0 +1,140 @@
+# ==============================================
+# 家計簿アプリケーション - Git除外設定
+# ==============================================
+
+# 機密情報・セキュリティファイル (最重要)
+secrets/
+*.key
+*.crt
+*.pem
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# 依存関係
+node_modules/
+vendor/
+
+# ビルド成果物
+dist/
+build/
+*/dist/
+*/build/
+
+# テスト結果・カバレッジファイル
+# Go coverage files
+coverage.html
+coverage.out
+coverage_*.out
+database_coverage.out
+*.coverage
+
+# Frontend test results
+playwright-report/
+test-results/
+coverage/
+.nyc_output
+
+# Test metrics & outputs (generated files)
+test-metrics/
+test-outputs/
+
+# Visual regression test snapshots
+*-snapshots/
+screenshots/
+videos/
+
+# JUnit/XML test reports
+junit.xml
+results.json
+*.xml
+
+# ログファイル
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+*.tmp
+
+# エディタ・IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+*.sublime-*
+
+# Docker
+.dockerignore.bak
+*.pid
+
+# バックアップファイル
+*.backup
+*.bak
+main.go.backup
+
+# 一時ファイル
+*.seed
+*.pid.lock
+
+# キャッシュ
+.cache/
+.parcel-cache/
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# MySQL/Database dumps (if any)
+*.sql.gz
+*.dump
+*.backup.sql
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Go workspace file
+go.work
+
+# Air (Go live reload)
+tmp/
+
+# Temporary folders
+temp/
+
+# Claude Code設定ディレクトリ
+.claude/

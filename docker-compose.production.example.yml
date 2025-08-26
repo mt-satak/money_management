@@ -1,0 +1,97 @@
+version: '3.8'
+
+# 本番環境用Docker Compose設定例
+# 注意: 実際の本番環境では、secretsディレクトリを使用せず、
+# 外部シークレット管理システム（AWS Secrets Manager等）を使用してください
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    environment:
+      - GIN_MODE=release
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_NAME=household_budget
+      # 本番環境では以下を外部シークレット管理システムから注入
+      # - JWT_SECRET=${JWT_SECRET}
+      # - DB_PASSWORD=${DB_PASSWORD}
+      # - CSRF_SECRET=${CSRF_SECRET}
+      # - SESSION_SECRET=${SESSION_SECRET}
+    # 本番環境では Docker Secrets の代わりに外部シークレット管理を使用
+    # secrets:
+    #   - db_password
+    #   - jwt_secret
+    #   - csrf_secret
+    #   - session_secret
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  database:
+    image: mysql:8.0
+    # 本番環境ではデータベースポートを公開しない（セキュリティ強化）
+    environment:
+      - MYSQL_DATABASE=household_budget
+      - TZ=Asia/Tokyo
+      # 本番環境では以下を外部シークレット管理システムから注入
+      # - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    # secrets:
+    #   - mysql_root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=+09:00
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+# 本番環境では外部シークレット管理システムを使用するため、
+# ローカルファイルベースのsecretsは使用しない
+# secrets:
+#   db_password:
+#     external: true
+#   jwt_secret:
+#     external: true
+#   csrf_secret:
+#     external: true
+#   session_secret:
+#     external: true
+#   mysql_root_password:
+#     external: true
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge

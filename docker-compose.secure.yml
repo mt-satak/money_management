@@ -1,0 +1,75 @@
+version: '3.8'
+
+# Docker Secretsを使用したセキュア版
+# 本番環境またはセキュリティを重視する環境向け
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    environment:
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_NAME=household_budget
+    secrets:
+      - db_password
+      - jwt_secret
+      - csrf_secret
+      - session_secret
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  database:
+    image: mysql:8.0
+    # 外部公開を停止（セキュリティ強化）
+    # ports:
+    #   - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=household_budget
+      - TZ=Asia/Tokyo
+    secrets:
+      - mysql_root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=+09:00
+    restart: unless-stopped
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  csrf_secret:
+    file: ./secrets/csrf_secret.txt
+  session_secret:
+    file: ./secrets/session_secret.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge
