@@ -47,11 +47,22 @@ done
 # ファイルがある場合のみPrettierを実行
 if [ ${#files[@]} -gt 0 ]; then
     echo "   🚀 Prettierを実行中..."
-    npx prettier --write "${files[@]}" || {
-        echo "❌ エラー: Prettierの実行に失敗しました。"
-        echo "   フロントエンドディレクトリで 'npm install' を実行してください。"
-        exit 1
-    }
+
+    # ローカルにインストールされたPrettierを優先使用
+    if [ -x "node_modules/.bin/prettier" ]; then
+        echo "   📦 ローカルPrettierを使用"
+        ./node_modules/.bin/prettier --write "${files[@]}" || {
+            echo "❌ エラー: ローカルPrettierの実行に失敗しました。"
+            exit 1
+        }
+    else
+        echo "   🌐 npx Prettierを使用（ローカル版が見つからない）"
+        npx prettier --write "${files[@]}" || {
+            echo "❌ エラー: Prettierの実行に失敗しました。"
+            echo "   フロントエンドディレクトリで 'npm install' を実行してください。"
+            exit 1
+        }
+    fi
     echo "✅ フロントエンドコードフォーマット完了 (${#files[@]}ファイル処理)"
 else
     echo "⚠️  処理対象のファイルがありませんでした。"
