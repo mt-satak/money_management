@@ -3,7 +3,7 @@
 # 本番環境と同じMySQL 8.0を使用してテストを実行
 # =========================================
 
-version: '3.8'
+version: "3.8"
 
 services:
   # テスト用MySQLデータベース
@@ -11,18 +11,18 @@ services:
   test-database:
     image: mysql:8.0
     ports:
-      - "3307:3306"  # 本番用の3306と区別するため3307を使用
+      - "3307:3306" # 本番用の3306と区別するため3307を使用
     environment:
       - MYSQL_ROOT_PASSWORD=testpassword
-      - MYSQL_DATABASE=household_budget_test  # テスト用データベース名
+      - MYSQL_DATABASE=household_budget_test # テスト用データベース名
       - TZ=Asia/Tokyo
     volumes:
-      - ./database/init:/docker-entrypoint-initdb.d  # 本番と同じ初期化スクリプトを使用
+      - ./database/init:/docker-entrypoint-initdb.d # 本番と同じ初期化スクリプトを使用
     networks:
       - test-network
     # 本番環境と同じMySQL設定を適用
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=+09:00
-    restart: "no"  # テスト用なので自動再起動は無効
+    restart: "no" # テスト用なので自動再起動は無効
 
 networks:
   test-network:

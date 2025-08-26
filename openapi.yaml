@@ -46,7 +46,7 @@ paths:
         - セキュリティ・監視
       security: []
       responses:
-        '200':
+        "200":
           description: 正常稼働
           content:
             application/json:
@@ -67,7 +67,7 @@ paths:
         - セキュリティ・監視
       security: []
       responses:
-        '200':
+        "200":
           description: CSRFトークン
           content:
             application/json:
@@ -85,7 +85,7 @@ paths:
         - セキュリティ・監視
       security: []
       responses:
-        '200':
+        "200":
           description: セキュリティ状況
           content:
             application/json:
@@ -148,24 +148,24 @@ paths:
                   type: string
                   example: password123
       responses:
-        '201':
+        "201":
           description: 登録成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
           description: リクエストエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: レート制限超過
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/login:
     post:
@@ -190,24 +190,24 @@ paths:
                   type: string
                   example: password123
       responses:
-        '200':
+        "200":
           description: ログイン成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: 認証失敗
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: レート制限超過
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/me:
     get:
@@ -215,18 +215,18 @@ paths:
       tags:
         - 認証
       responses:
-        '200':
+        "200":
           description: ユーザー情報
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
+                $ref: "#/components/schemas/User"
+        "401":
           description: 認証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/logout:
     post:
@@ -234,7 +234,7 @@ paths:
       tags:
         - 認証
       responses:
-        '200':
+        "200":
           description: ログアウト成功
           content:
             application/json:
@@ -244,12 +244,12 @@ paths:
                   message:
                     type: string
                     example: ログアウトしました
-        '401':
+        "401":
           description: 認証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/logout-all:
     post:
@@ -257,7 +257,7 @@ paths:
       tags:
         - 認証
       responses:
-        '200':
+        "200":
           description: 全ログアウト成功
           content:
             application/json:
@@ -274,7 +274,7 @@ paths:
       tags:
         - 認証
       responses:
-        '200':
+        "200":
           description: トークン状況
           content:
             application/json:
@@ -295,7 +295,7 @@ paths:
       tags:
         - ユーザー管理
       responses:
-        '200':
+        "200":
           description: ユーザー一覧
           content:
             application/json:
@@ -305,7 +305,7 @@ paths:
                   users:
                     type: array
                     items:
-                      $ref: '#/components/schemas/User'
+                      $ref: "#/components/schemas/User"
 
   /api/bills:
     get:
@@ -313,7 +313,7 @@ paths:
       tags:
         - 家計簿管理
       responses:
-        '200':
+        "200":
           description: 家計簿一覧
           content:
             application/json:
@@ -323,7 +323,7 @@ paths:
                   bills:
                     type: array
                     items:
-                      $ref: '#/components/schemas/BillResponse'
+                      $ref: "#/components/schemas/BillResponse"
     post:
       summary: 家計簿作成
       tags:
@@ -349,18 +349,18 @@ paths:
                   type: integer
                   example: 2
       responses:
-        '201':
+        "201":
           description: 作成成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BillResponse'
-        '409':
+                $ref: "#/components/schemas/BillResponse"
+        "409":
           description: 重複エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/bills/{year}/{month}:
     get:
@@ -379,17 +379,17 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: 家計簿詳細
           content:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/BillResponse'
+                  - $ref: "#/components/schemas/BillResponse"
                   - type: object
                     properties:
                       bill:
-                        type: 'null'
+                        type: "null"
 
   /api/bills/{id}/items:
     put:
@@ -419,12 +419,12 @@ paths:
                       amount:
                         type: number
       responses:
-        '200':
+        "200":
           description: 更新成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BillResponse'
+                $ref: "#/components/schemas/BillResponse"
 
   /api/bills/{id}/request:
     put:
@@ -438,7 +438,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: 請求確定成功
           content:
             application/json:
@@ -461,7 +461,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: 支払確定成功
           content:
             application/json:
@@ -484,7 +484,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: 削除成功
           content:
             application/json:
@@ -569,13 +569,13 @@ components:
           format: date-time
           nullable: true
         requester:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         payer:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         items:
           type: array
           items:
-            $ref: '#/components/schemas/BillItem'
+            $ref: "#/components/schemas/BillItem"
         created_at:
           type: string
           format: date-time
@@ -585,7 +585,7 @@ components:
 
     BillResponse:
       allOf:
-        - $ref: '#/components/schemas/MonthlyBill'
+        - $ref: "#/components/schemas/MonthlyBill"
         - type: object
           properties:
             total_amount:
@@ -597,7 +597,7 @@ components:
         token:
           type: string
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
 
     Error:
       type: object

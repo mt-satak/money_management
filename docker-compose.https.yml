@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 # HTTPS対応版Docker Compose設定
 # セキュリティ強化とHTTPS通信に対応
@@ -8,8 +8,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"    # HTTP（本番では443へのリダイレクト用）
-      - "443:443"  # HTTPS
+      - "80:80" # HTTP（本番では443へのリダイレクト用）
+      - "443:443" # HTTPS
     depends_on:
       - backend
     volumes:

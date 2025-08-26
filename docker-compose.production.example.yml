@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 # 本番環境用Docker Compose設定例
 # 注意: 実際の本番環境では、secretsディレクトリを使用せず、

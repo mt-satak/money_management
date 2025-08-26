@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 # Docker Secretsを使用したセキュア版
 # 本番環境またはセキュリティを重視する環境向け

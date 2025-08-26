@@ -1,914 +1,865 @@
 {
-    "openapi": "3.0.3",
-    "info": {
-        "title": "Money Management API\uff08\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u7248\uff09",
-        "description": "\u5bb6\u8a08\u7c3f\u7ba1\u7406\u30b7\u30b9\u30c6\u30e0\u306e\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u3055\u308c\u305fRESTful API\u4ed5\u69d8\u66f8\n\n# \u6982\u8981\n\u672cAPI\u306f\u5bb6\u8a08\u7c3f\u306e\u4f5c\u6210\u3001\u7de8\u96c6\u3001\u8acb\u6c42\u3001\u652f\u6255\u3044\u3001\u524a\u9664\u6a5f\u80fd\u3001\u304a\u3088\u3073\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u6a5f\u80fd\u3092\u63d0\u4f9b\u3057\u307e\u3059\u3002\n\n# \u4e3b\u8981\u6a5f\u80fd\n- JWT\u8a8d\u8a3c\u30b7\u30b9\u30c6\u30e0\uff08\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u6e08\u307f\uff09\n- \u6708\u6b21\u5bb6\u8a08\u7c3f\u7ba1\u7406\uff08CRUD\u64cd\u4f5c\uff09\n- \u91cd\u8907\u4f5c\u6210\u9632\u6b62\n- \u6a29\u9650\u5236\u5fa1\uff08\u8acb\u6c42\u8005\u30fb\u652f\u6255\u8005\u5225\uff09\n- \u30ef\u30fc\u30af\u30d5\u30ed\u30fc\u7ba1\u7406\uff08pending\u2192requested\u2192paid\uff09\n- \u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996\u30fb\u7ba1\u7406\u6a5f\u80fd\n\n# \u8a8d\u8a3c\nJWT (JSON Web Token) \u30d9\u30fc\u30b9\u306e\u8a8d\u8a3c\u3092\u4f7f\u7528\u3057\u307e\u3059\u3002\n\n# \u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5b9f\u88c5\u72b6\u6cc1\uff08Phase 3 \u5b8c\u4e86\uff09\n\u2705 \u672c\u756a\u74b0\u5883\u5bfe\u5fdc\u6e08\u307f\uff1aJWT\u8a8d\u8a3c\u5f37\u5316\u30fbCSRF\u4fdd\u8b77\u30fb\u30ec\u30fc\u30c8\u5236\u9650\u30fbHTTPS\u5bfe\u5fdc\u30fb\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30d8\u30c3\u30c0\u30fc\u30fb\u5165\u529b\u5024\u691c\u8a3c\u30fb\u30a8\u30e9\u30fc\u30cf\u30f3\u30c9\u30ea\u30f3\u30b0\u30fb\u30b3\u30f3\u30c6\u30ca\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\n\n# \u54c1\u8cea\u4fdd\u8a3c\n\u672c\u4ed5\u69d8\u66f8\u306f\u5b9f\u88c5\u30b3\u30fc\u30c9\u306b\u57fa\u3065\u3044\u3066\u4f5c\u6210\u3055\u308c\u3066\u304a\u308a\u3001\u7d99\u7d9a\u7684\u306a\u54c1\u8cea\u4fdd\u8a3c\u30b7\u30b9\u30c6\u30e0\uff08Backend 73\u30c6\u30b9\u30c8\u30fbFrontend 268\u30c6\u30b9\u30c8\uff09\u306b\u3088\u3063\u3066\u6574\u5408\u6027\u304c\u7dad\u6301\u3055\u308c\u3066\u3044\u307e\u3059\u3002",
-        "version": "2.0.0",
-        "contact": {
-            "name": "Money Management Team",
-            "email": "support@moneymanagement.com"
-        }
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Money Management API\uff08\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u7248\uff09",
+    "description": "\u5bb6\u8a08\u7c3f\u7ba1\u7406\u30b7\u30b9\u30c6\u30e0\u306e\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u3055\u308c\u305fRESTful API\u4ed5\u69d8\u66f8\n\n# \u6982\u8981\n\u672cAPI\u306f\u5bb6\u8a08\u7c3f\u306e\u4f5c\u6210\u3001\u7de8\u96c6\u3001\u8acb\u6c42\u3001\u652f\u6255\u3044\u3001\u524a\u9664\u6a5f\u80fd\u3001\u304a\u3088\u3073\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u6a5f\u80fd\u3092\u63d0\u4f9b\u3057\u307e\u3059\u3002\n\n# \u4e3b\u8981\u6a5f\u80fd\n- JWT\u8a8d\u8a3c\u30b7\u30b9\u30c6\u30e0\uff08\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5f37\u5316\u6e08\u307f\uff09\n- \u6708\u6b21\u5bb6\u8a08\u7c3f\u7ba1\u7406\uff08CRUD\u64cd\u4f5c\uff09\n- \u91cd\u8907\u4f5c\u6210\u9632\u6b62\n- \u6a29\u9650\u5236\u5fa1\uff08\u8acb\u6c42\u8005\u30fb\u652f\u6255\u8005\u5225\uff09\n- \u30ef\u30fc\u30af\u30d5\u30ed\u30fc\u7ba1\u7406\uff08pending\u2192requested\u2192paid\uff09\n- \u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996\u30fb\u7ba1\u7406\u6a5f\u80fd\n\n# \u8a8d\u8a3c\nJWT (JSON Web Token) \u30d9\u30fc\u30b9\u306e\u8a8d\u8a3c\u3092\u4f7f\u7528\u3057\u307e\u3059\u3002\n\n# \u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u5b9f\u88c5\u72b6\u6cc1\uff08Phase 3 \u5b8c\u4e86\uff09\n\u2705 \u672c\u756a\u74b0\u5883\u5bfe\u5fdc\u6e08\u307f\uff1aJWT\u8a8d\u8a3c\u5f37\u5316\u30fbCSRF\u4fdd\u8b77\u30fb\u30ec\u30fc\u30c8\u5236\u9650\u30fbHTTPS\u5bfe\u5fdc\u30fb\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30d8\u30c3\u30c0\u30fc\u30fb\u5165\u529b\u5024\u691c\u8a3c\u30fb\u30a8\u30e9\u30fc\u30cf\u30f3\u30c9\u30ea\u30f3\u30b0\u30fb\u30b3\u30f3\u30c6\u30ca\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\n\n# \u54c1\u8cea\u4fdd\u8a3c\n\u672c\u4ed5\u69d8\u66f8\u306f\u5b9f\u88c5\u30b3\u30fc\u30c9\u306b\u57fa\u3065\u3044\u3066\u4f5c\u6210\u3055\u308c\u3066\u304a\u308a\u3001\u7d99\u7d9a\u7684\u306a\u54c1\u8cea\u4fdd\u8a3c\u30b7\u30b9\u30c6\u30e0\uff08Backend 73\u30c6\u30b9\u30c8\u30fbFrontend 268\u30c6\u30b9\u30c8\uff09\u306b\u3088\u3063\u3066\u6574\u5408\u6027\u304c\u7dad\u6301\u3055\u308c\u3066\u3044\u307e\u3059\u3002",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Money Management Team",
+      "email": "support@moneymanagement.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "\u958b\u767a\u74b0\u5883"
     },
-    "servers": [
-        {
-            "url": "http://localhost:8080",
-            "description": "\u958b\u767a\u74b0\u5883"
-        },
-        {
-            "url": "https://localhost:443",
-            "description": "HTTPS\u74b0\u5883\uff08\u672c\u756a\u5bfe\u5fdc\uff09"
-        }
-    ],
-    "security": [
-        {
-            "bearerAuth": [],
-            "csrfToken": []
-        }
-    ],
-    "paths": {
-        "/health": {
-            "get": {
-                "summary": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af",
-                "tags": [
-                    "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"
-                ],
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "\u6b63\u5e38\u7a3c\u50cd",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "ok"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u5bb6\u8a08\u7c3fAPI\u7a3c\u50cd\u4e2d"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/csrf-token": {
-            "get": {
-                "summary": "CSRF\u30c8\u30fc\u30af\u30f3\u53d6\u5f97",
-                "tags": [
-                    "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"
-                ],
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "CSRF\u30c8\u30fc\u30af\u30f3",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "csrf_token": {
-                                            "type": "string",
-                                            "example": "MjQyODM0NzQ2NzQ4NzY4NzQ2NzQ2NzQ2NzQ2NzQ2"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/security-status": {
-            "get": {
-                "summary": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996\u60c5\u5831",
-                "tags": [
-                    "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"
-                ],
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u72b6\u6cc1",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "rate_limit": {
-                                            "type": "object",
-                                            "properties": {
-                                                "general_clients": {
-                                                    "type": "integer"
-                                                },
-                                                "auth_clients": {
-                                                    "type": "integer"
-                                                },
-                                                "create_clients": {
-                                                    "type": "integer"
-                                                },
-                                                "limits": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "general": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "requests_per_minute": {
-                                                                    "type": "integer"
-                                                                },
-                                                                "burst": {
-                                                                    "type": "integer"
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "token_blacklist": {
-                                            "type": "object",
-                                            "properties": {
-                                                "total_tokens": {
-                                                    "type": "integer"
-                                                },
-                                                "valid_tokens": {
-                                                    "type": "integer"
-                                                },
-                                                "expired_tokens": {
-                                                    "type": "integer"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/register": {
-            "post": {
-                "summary": "\u65b0\u898f\u30e6\u30fc\u30b6\u30fc\u767b\u9332",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "security": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "name",
-                                    "account_id",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "\u5c71\u7530\u592a\u90ce"
-                                    },
-                                    "account_id": {
-                                        "type": "string",
-                                        "example": "yamada_taro"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "password123"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "\u767b\u9332\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AuthResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "\u30ea\u30af\u30a8\u30b9\u30c8\u30a8\u30e9\u30fc",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "\u30ec\u30fc\u30c8\u5236\u9650\u8d85\u904e",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/login": {
-            "post": {
-                "summary": "\u30ed\u30b0\u30a4\u30f3",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "security": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "account_id",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "account_id": {
-                                        "type": "string",
-                                        "example": "yamada_taro"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "password123"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "\u30ed\u30b0\u30a4\u30f3\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AuthResponse"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "\u8a8d\u8a3c\u5931\u6557",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "429": {
-                        "description": "\u30ec\u30fc\u30c8\u5236\u9650\u8d85\u904e",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/me": {
-            "get": {
-                "summary": "\u73fe\u5728\u30e6\u30fc\u30b6\u30fc\u60c5\u5831\u53d6\u5f97",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u30e6\u30fc\u30b6\u30fc\u60c5\u5831",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/User"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "\u8a8d\u8a3c\u30a8\u30e9\u30fc",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/logout": {
-            "post": {
-                "summary": "\u30ed\u30b0\u30a2\u30a6\u30c8\uff08\u73fe\u5728\u30c8\u30fc\u30af\u30f3\u7121\u52b9\u5316\uff09",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u30ed\u30b0\u30a2\u30a6\u30c8\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3057\u305f"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "\u8a8d\u8a3c\u30a8\u30e9\u30fc",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/logout-all": {
-            "post": {
-                "summary": "\u5168\u30c7\u30d0\u30a4\u30b9\u30ed\u30b0\u30a2\u30a6\u30c8",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u5168\u30ed\u30b0\u30a2\u30a6\u30c8\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u3059\u3079\u3066\u306e\u30c7\u30d0\u30a4\u30b9\u304b\u3089\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3057\u305f"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/token-status": {
-            "get": {
-                "summary": "\u30c8\u30fc\u30af\u30f3\u30b9\u30c6\u30fc\u30bf\u30b9\u78ba\u8a8d",
-                "tags": [
-                    "\u8a8d\u8a3c"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u30c8\u30fc\u30af\u30f3\u72b6\u6cc1",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "valid": {
-                                            "type": "boolean"
-                                        },
-                                        "user_id": {
-                                            "type": "integer"
-                                        },
-                                        "expires_at": {
-                                            "type": "string",
-                                            "format": "date-time"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/users": {
-            "get": {
-                "summary": "\u30e6\u30fc\u30b6\u30fc\u4e00\u89a7\u53d6\u5f97",
-                "tags": [
-                    "\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u30e6\u30fc\u30b6\u30fc\u4e00\u89a7",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "users": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/User"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills": {
-            "get": {
-                "summary": "\u5bb6\u8a08\u7c3f\u4e00\u89a7\u53d6\u5f97",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u5bb6\u8a08\u7c3f\u4e00\u89a7",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "bills": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/BillResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "summary": "\u5bb6\u8a08\u7c3f\u4f5c\u6210",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "year",
-                                    "month",
-                                    "payer_id"
-                                ],
-                                "properties": {
-                                    "year": {
-                                        "type": "integer",
-                                        "example": 2024
-                                    },
-                                    "month": {
-                                        "type": "integer",
-                                        "example": 3
-                                    },
-                                    "payer_id": {
-                                        "type": "integer",
-                                        "example": 2
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "\u4f5c\u6210\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BillResponse"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "\u91cd\u8907\u30a8\u30e9\u30fc",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills/{year}/{month}": {
-            "get": {
-                "summary": "\u7279\u5b9a\u5e74\u6708\u5bb6\u8a08\u7c3f\u53d6\u5f97",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "parameters": [
-                    {
-                        "name": "year",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "month",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u5bb6\u8a08\u7c3f\u8a73\u7d30",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/BillResponse"
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "bill": {
-                                                    "type": "null"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills/{id}/items": {
-            "put": {
-                "summary": "\u5bb6\u8a08\u7c3f\u9805\u76ee\u66f4\u65b0",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "items": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "item_name": {
-                                                    "type": "string"
-                                                },
-                                                "amount": {
-                                                    "type": "number"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "\u66f4\u65b0\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BillResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills/{id}/request": {
-            "put": {
-                "summary": "\u8acb\u6c42\u78ba\u5b9a",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u8acb\u6c42\u78ba\u5b9a\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u5bb6\u8a08\u7c3f\u306e\u8acb\u6c42\u304c\u78ba\u5b9a\u3057\u307e\u3057\u305f"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills/{id}/payment": {
-            "put": {
-                "summary": "\u652f\u6255\u78ba\u5b9a",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u652f\u6255\u78ba\u5b9a\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u652f\u6255\u3044\u304c\u78ba\u5b9a\u3057\u307e\u3057\u305f"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/bills/{id}": {
-            "delete": {
-                "summary": "\u5bb6\u8a08\u7c3f\u524a\u9664",
-                "tags": [
-                    "\u5bb6\u8a08\u7c3f\u7ba1\u7406"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\u524a\u9664\u6210\u529f",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "\u5bb6\u8a08\u7c3f\u3092\u524a\u9664\u3057\u307e\u3057\u305f"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "components": {
-        "securitySchemes": {
-            "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
-            },
-            "csrfToken": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-CSRF-Token"
-            }
-        },
-        "schemas": {
-            "User": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "account_id": {
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "BillItem": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "bill_id": {
-                        "type": "integer"
-                    },
-                    "item_name": {
-                        "type": "string"
-                    },
-                    "amount": {
-                        "type": "number"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "MonthlyBill": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "year": {
-                        "type": "integer"
-                    },
-                    "month": {
-                        "type": "integer"
-                    },
-                    "requester_id": {
-                        "type": "integer"
-                    },
-                    "payer_id": {
-                        "type": "integer"
-                    },
+    {
+      "url": "https://localhost:443",
+      "description": "HTTPS\u74b0\u5883\uff08\u672c\u756a\u5bfe\u5fdc\uff09"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": [],
+      "csrfToken": []
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af",
+        "tags": ["\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "\u6b63\u5e38\u7a3c\u50cd",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
                     "status": {
-                        "type": "string",
-                        "enum": [
-                            "pending",
-                            "requested",
-                            "paid"
-                        ]
+                      "type": "string",
+                      "example": "ok"
                     },
-                    "request_date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "payment_date": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "requester": {
-                        "$ref": "#/components/schemas/User"
-                    },
-                    "payer": {
-                        "$ref": "#/components/schemas/User"
-                    },
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/BillItem"
-                        }
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
+                    "message": {
+                      "type": "string",
+                      "example": "\u5bb6\u8a08\u7c3fAPI\u7a3c\u50cd\u4e2d"
                     }
+                  }
                 }
-            },
-            "BillResponse": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/MonthlyBill"
-                    },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "total_amount": {
-                                "type": "number"
-                            }
-                        }
-                    }
-                ]
-            },
-            "AuthResponse": {
-                "type": "object",
-                "properties": {
-                    "token": {
-                        "type": "string"
-                    },
-                    "user": {
-                        "$ref": "#/components/schemas/User"
-                    }
-                }
-            },
-            "Error": {
-                "type": "object",
-                "properties": {
-                    "error": {
-                        "type": "string"
-                    }
-                }
+              }
             }
+          }
         }
+      }
     },
-    "tags": [
-        {
-            "name": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996",
-            "description": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af\u30fbCSRF\u30fb\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996"
-        },
-        {
-            "name": "\u8a8d\u8a3c",
-            "description": "\u30e6\u30fc\u30b6\u30fc\u8a8d\u8a3c\u30fbJWT\u7ba1\u7406"
-        },
-        {
-            "name": "\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406",
-            "description": "\u30e6\u30fc\u30b6\u30fc\u60c5\u5831\u7ba1\u7406"
-        },
-        {
-            "name": "\u5bb6\u8a08\u7c3f\u7ba1\u7406",
-            "description": "\u5bb6\u8a08\u7c3fCRUD\u30fb\u30ef\u30fc\u30af\u30d5\u30ed\u30fc"
+    "/api/csrf-token": {
+      "get": {
+        "summary": "CSRF\u30c8\u30fc\u30af\u30f3\u53d6\u5f97",
+        "tags": ["\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "CSRF\u30c8\u30fc\u30af\u30f3",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "csrf_token": {
+                      "type": "string",
+                      "example": "MjQyODM0NzQ2NzQ4NzY4NzQ2NzQ2NzQ2NzQ2NzQ2"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-    ]
+      }
+    },
+    "/api/security-status": {
+      "get": {
+        "summary": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996\u60c5\u5831",
+        "tags": ["\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u72b6\u6cc1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rate_limit": {
+                      "type": "object",
+                      "properties": {
+                        "general_clients": {
+                          "type": "integer"
+                        },
+                        "auth_clients": {
+                          "type": "integer"
+                        },
+                        "create_clients": {
+                          "type": "integer"
+                        },
+                        "limits": {
+                          "type": "object",
+                          "properties": {
+                            "general": {
+                              "type": "object",
+                              "properties": {
+                                "requests_per_minute": {
+                                  "type": "integer"
+                                },
+                                "burst": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "token_blacklist": {
+                      "type": "object",
+                      "properties": {
+                        "total_tokens": {
+                          "type": "integer"
+                        },
+                        "valid_tokens": {
+                          "type": "integer"
+                        },
+                        "expired_tokens": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "\u65b0\u898f\u30e6\u30fc\u30b6\u30fc\u767b\u9332",
+        "tags": ["\u8a8d\u8a3c"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "account_id", "password"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "\u5c71\u7530\u592a\u90ce"
+                  },
+                  "account_id": {
+                    "type": "string",
+                    "example": "yamada_taro"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "\u767b\u9332\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "\u30ea\u30af\u30a8\u30b9\u30c8\u30a8\u30e9\u30fc",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "\u30ec\u30fc\u30c8\u5236\u9650\u8d85\u904e",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "\u30ed\u30b0\u30a4\u30f3",
+        "tags": ["\u8a8d\u8a3c"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["account_id", "password"],
+                "properties": {
+                  "account_id": {
+                    "type": "string",
+                    "example": "yamada_taro"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "\u30ed\u30b0\u30a4\u30f3\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "\u8a8d\u8a3c\u5931\u6557",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "\u30ec\u30fc\u30c8\u5236\u9650\u8d85\u904e",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "\u73fe\u5728\u30e6\u30fc\u30b6\u30fc\u60c5\u5831\u53d6\u5f97",
+        "tags": ["\u8a8d\u8a3c"],
+        "responses": {
+          "200": {
+            "description": "\u30e6\u30fc\u30b6\u30fc\u60c5\u5831",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "\u8a8d\u8a3c\u30a8\u30e9\u30fc",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "\u30ed\u30b0\u30a2\u30a6\u30c8\uff08\u73fe\u5728\u30c8\u30fc\u30af\u30f3\u7121\u52b9\u5316\uff09",
+        "tags": ["\u8a8d\u8a3c"],
+        "responses": {
+          "200": {
+            "description": "\u30ed\u30b0\u30a2\u30a6\u30c8\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3057\u305f"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "\u8a8d\u8a3c\u30a8\u30e9\u30fc",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout-all": {
+      "post": {
+        "summary": "\u5168\u30c7\u30d0\u30a4\u30b9\u30ed\u30b0\u30a2\u30a6\u30c8",
+        "tags": ["\u8a8d\u8a3c"],
+        "responses": {
+          "200": {
+            "description": "\u5168\u30ed\u30b0\u30a2\u30a6\u30c8\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "\u3059\u3079\u3066\u306e\u30c7\u30d0\u30a4\u30b9\u304b\u3089\u30ed\u30b0\u30a2\u30a6\u30c8\u3057\u307e\u3057\u305f"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/token-status": {
+      "get": {
+        "summary": "\u30c8\u30fc\u30af\u30f3\u30b9\u30c6\u30fc\u30bf\u30b9\u78ba\u8a8d",
+        "tags": ["\u8a8d\u8a3c"],
+        "responses": {
+          "200": {
+            "description": "\u30c8\u30fc\u30af\u30f3\u72b6\u6cc1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean"
+                    },
+                    "user_id": {
+                      "type": "integer"
+                    },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "\u30e6\u30fc\u30b6\u30fc\u4e00\u89a7\u53d6\u5f97",
+        "tags": ["\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406"],
+        "responses": {
+          "200": {
+            "description": "\u30e6\u30fc\u30b6\u30fc\u4e00\u89a7",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills": {
+      "get": {
+        "summary": "\u5bb6\u8a08\u7c3f\u4e00\u89a7\u53d6\u5f97",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "responses": {
+          "200": {
+            "description": "\u5bb6\u8a08\u7c3f\u4e00\u89a7",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bills": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BillResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "\u5bb6\u8a08\u7c3f\u4f5c\u6210",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["year", "month", "payer_id"],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "example": 2024
+                  },
+                  "month": {
+                    "type": "integer",
+                    "example": 3
+                  },
+                  "payer_id": {
+                    "type": "integer",
+                    "example": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "\u4f5c\u6210\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "\u91cd\u8907\u30a8\u30e9\u30fc",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{year}/{month}": {
+      "get": {
+        "summary": "\u7279\u5b9a\u5e74\u6708\u5bb6\u8a08\u7c3f\u53d6\u5f97",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\u5bb6\u8a08\u7c3f\u8a73\u7d30",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/BillResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "bill": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{id}/items": {
+      "put": {
+        "summary": "\u5bb6\u8a08\u7c3f\u9805\u76ee\u66f4\u65b0",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "item_name": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "\u66f4\u65b0\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{id}/request": {
+      "put": {
+        "summary": "\u8acb\u6c42\u78ba\u5b9a",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\u8acb\u6c42\u78ba\u5b9a\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "\u5bb6\u8a08\u7c3f\u306e\u8acb\u6c42\u304c\u78ba\u5b9a\u3057\u307e\u3057\u305f"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{id}/payment": {
+      "put": {
+        "summary": "\u652f\u6255\u78ba\u5b9a",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\u652f\u6255\u78ba\u5b9a\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "\u652f\u6255\u3044\u304c\u78ba\u5b9a\u3057\u307e\u3057\u305f"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{id}": {
+      "delete": {
+        "summary": "\u5bb6\u8a08\u7c3f\u524a\u9664",
+        "tags": ["\u5bb6\u8a08\u7c3f\u7ba1\u7406"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\u524a\u9664\u6210\u529f",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "\u5bb6\u8a08\u7c3f\u3092\u524a\u9664\u3057\u307e\u3057\u305f"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "account_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BillItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "bill_id": {
+            "type": "integer"
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MonthlyBill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "month": {
+            "type": "integer"
+          },
+          "requester_id": {
+            "type": "integer"
+          },
+          "payer_id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "requested", "paid"]
+          },
+          "request_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "payment_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "requester": {
+            "$ref": "#/components/schemas/User"
+          },
+          "payer": {
+            "$ref": "#/components/schemas/User"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillItem"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BillResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MonthlyBill"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "total_amount": {
+                "type": "number"
+              }
+            }
+          }
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u30fb\u76e3\u8996",
+      "description": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af\u30fbCSRF\u30fb\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u76e3\u8996"
+    },
+    {
+      "name": "\u8a8d\u8a3c",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u8a8d\u8a3c\u30fbJWT\u7ba1\u7406"
+    },
+    {
+      "name": "\u30e6\u30fc\u30b6\u30fc\u7ba1\u7406",
+      "description": "\u30e6\u30fc\u30b6\u30fc\u60c5\u5831\u7ba1\u7406"
+    },
+    {
+      "name": "\u5bb6\u8a08\u7c3f\u7ba1\u7406",
+      "description": "\u5bb6\u8a08\u7c3fCRUD\u30fb\u30ef\u30fc\u30af\u30d5\u30ed\u30fc"
+    }
+  ]
 }
