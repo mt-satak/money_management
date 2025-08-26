@@ -114,7 +114,7 @@ func CreateBillHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 			// デッドロックエラーの場合はリトライ
 			if strings.Contains(err.Error(), "Deadlock found when trying to get lock") {
 				log.Printf("🔄 Deadlock detected, retrying... (attempt %d/%d)", i+1, maxRetries)
-				time.Sleep(time.Duration(100*(i+1)) * time.Millisecond) // 指数バックオフ
+				time.Sleep(time.Duration(100*(1<<i)) * time.Millisecond) // 指数バックオフ: 100ms, 200ms, 400ms
 				continue
 			}
 
