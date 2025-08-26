@@ -8,14 +8,14 @@ import (
 
 // GlobalTestConfig テスト用グローバル設定
 type GlobalTestConfig struct {
-	DatabaseMaxConns     int
-	DatabaseIdleConns    int
-	ConnMaxLifetime      time.Duration
-	DeadlockMaxRetries   int
-	UseInMemoryDB        bool
-	VerboseLogging       bool
-	ParallelTestEnabled  bool
-	ErrorLogging         bool
+	DatabaseMaxConns    int
+	DatabaseIdleConns   int
+	ConnMaxLifetime     time.Duration
+	DeadlockMaxRetries  int
+	UseInMemoryDB       bool
+	VerboseLogging      bool
+	ParallelTestEnabled bool
+	ErrorLogging        bool
 }
 
 // GetGlobalConfig グローバルテスト設定を取得（環境変数対応）
