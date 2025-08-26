@@ -159,9 +159,18 @@ type OptimizationResult struct {
 
 // collectMetrics 接続プールメトリクス収集
 func (po *PoolOptimizer) collectMetrics() error {
+	// nil チェック
+	if po == nil || po.db == nil {
+		return fmt.Errorf("PoolOptimizer またはデータベース接続がnilです")
+	}
+
 	sqlDB, err := po.db.DB()
 	if err != nil {
 		return err
+	}
+
+	if sqlDB == nil {
+		return fmt.Errorf("SQLデータベース接続がnilです")
 	}
 
 	stats := sqlDB.Stats()

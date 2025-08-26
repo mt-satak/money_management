@@ -20,9 +20,15 @@ import (
 // SetupTestDB テスト用データベース接続を初期化
 // 本番環境と同じMySQLを使用するが、テスト用の設定とデータベース名を使用
 func SetupTestDB() (*gorm.DB, error) {
-	// テスト用データベース接続文字列（接続プール最適化）
-	// ポート3307のテスト用MySQLコンテナに接続
-	dsn := "root:testpassword@tcp(localhost:3307)/household_budget_test?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
+	// テスト用データベース接続文字列（環境変数ベース）
+	// GitHub Actions環境では環境変数が設定される
+	dbHost := testconfig.GetStringEnv("DB_HOST", "localhost")
+	dbPort := testconfig.GetStringEnv("DB_PORT", "3306")
+	dbUser := testconfig.GetStringEnv("DB_USER", "root")
+	dbPassword := testconfig.GetStringEnv("DB_PASSWORD", "root_test_password")
+	dbName := testconfig.GetStringEnv("DB_NAME", "money_management_test")
+
+	dsn := dbUser + ":" + dbPassword + "@tcp(" + dbHost + ":" + dbPort + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Asia%2FTokyo"
 
 	var db *gorm.DB
 	var err error
@@ -38,8 +44,8 @@ func SetupTestDB() (*gorm.DB, error) {
 		if err == nil {
 			// 接続プールの最適化（テスト用固定設定）
 			if sqlDB, err := db.DB(); err == nil {
-				sqlDB.SetMaxOpenConns(20)                   // 最大接続数
-				sqlDB.SetMaxIdleConns(10)                   // アイドル接続数
+				sqlDB.SetMaxOpenConns(20)                  // 最大接続数
+				sqlDB.SetMaxIdleConns(10)                  // アイドル接続数
 				sqlDB.SetConnMaxLifetime(30 * time.Minute) // 接続の最大生存時間
 				log.Printf("✅ テスト用データベースに接続しました (最大接続: %d, アイドル: %d)", 20, 10)
 			} else {
@@ -80,6 +86,12 @@ func isDeadlockError(err error) bool {
 
 // executeWithDeadlockRetry デッドロック発生時のリトライ機構付きでSQL実行（環境変数対応）
 func executeWithDeadlockRetry(db *gorm.DB, sql string, maxRetries int) error {
+	// nil ポインタチェック
+	if db == nil {
+		log.Printf("⚠️  executeWithDeadlockRetry: データベース接続がnilです。SQL実行をスキップ: %s", sql)
+		return nil
+	}
+
 	if maxRetries == 0 {
 		maxRetries = 3 // テスト用のデフォルト最大リトライ回数
 	}
@@ -117,6 +129,19 @@ func executeWithDeadlockRetry(db *gorm.DB, sql string, maxRetries int) error {
 // CleanupTestDB テスト用データベースのクリーンアップ（外部キー制約対応・デッドロック回避機構付き）
 // テスト実行後にテーブル内のデータを全削除して初期状態に戻す
 func CleanupTestDB(db *gorm.DB) error {
+	// nil ポインタチェック
+	if db == nil {
+		log.Println("⚠️  CleanupTestDB: データベース接続がnilです。クリーンアップをスキップします。")
+		return nil
+	}
+
+	// データベース接続の健全性確認
+	sqlDB, err := db.DB()
+	if err != nil || sqlDB == nil {
+		log.Printf("⚠️  CleanupTestDB: データベース接続が無効です: %v", err)
+		return nil
+	}
+
 	// デッドロック対応: テスト用の最大リトライ回数
 	maxRetries := 3
 

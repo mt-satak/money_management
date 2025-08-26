@@ -208,32 +208,44 @@ jobs:
         run: |
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
             echo "🎭 Playwrightブラウザがキャッシュから復元されました"
+            npx playwright install-deps
           else
             echo "🎭 Playwrightブラウザをインストール中..."
             npx playwright install --with-deps
           fi
 
-      - name: "Setup Docker Buildx"
-        uses: docker/setup-buildx-action@v3
-
-      - name: "Start Test Environment"
+      - name: "Build Frontend"
+        working-directory: frontend
         run: |
-          echo "🚀 Starting test environment..."
-          if [ -f "docker-compose.test.yml" ]; then
-            docker-compose -f docker-compose.test.yml pull
-            docker-compose -f docker-compose.test.yml up -d --wait
-            echo "⏰ Waiting for services to be ready..."
-            sleep 15
-          else
-            echo "⚠️ docker-compose.test.yml not found, using default"
-            docker-compose up -d --wait
-            sleep 15
-          fi
+          echo "🏗️ E2Eテスト用フロントエンドをビルド中..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        working-directory: frontend
+        run: |
+          echo "🚀 フロントエンドプレビューサーバーを起動中..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ サーバーの起動を待機中..."
+
+          # サーバーが起動するまで最大30秒待機
+          for i in {1..30}; do
+            if curl -f http://localhost:4173/ > /dev/null 2>&1; then
+              echo "✅ プレビューサーバーが起動しました (ポート4173)"
+              break
+            elif curl -f http://localhost:3000/ > /dev/null 2>&1; then
+              echo "✅ プレビューサーバーが起動しました (ポート3000)"
+              break
+            fi
+            echo "サーバー起動を待機中... ($i/30)"
+            sleep 1
+          done
 
       - name: "Run E2E Smoke Tests"
         working-directory: frontend
         run: |
-          echo "🔥 Running E2E smoke tests..."
+          echo "🔥 E2Eスモークテスト実行中..."
           npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
 
       - name: "Upload Playwright Report"
@@ -244,13 +256,16 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 30
 
-      - name: "Cleanup Test Environment"
+      - name: "Cleanup Preview Server"
         if: always()
         run: |
-          if [ -f "docker-compose.test.yml" ]; then
-            docker-compose -f docker-compose.test.yml down -v
-          else
-            docker-compose down -v
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 プレビューサーバーを停止中..."
+            kill $SERVER_PID || true
+            sleep 2
+            # 念のため、ポートを使用しているプロセスを強制終了
+            pkill -f "vite.*preview" || true
+            echo "✅ プレビューサーバーの停止完了"
           fi
 
   # =======================================================

@@ -19,6 +19,9 @@ import (
 // TestEnvironmentStrategy_DevelopmentVsProduction 開発環境vs本番環境戦略テスト
 func TestEnvironmentStrategy_DevelopmentVsProduction(t *testing.T) {
 	t.Run("Development_SQLite_FastFeedback", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("データベーステストは-shortフラグ使用時はスキップ")
+		}
 		// 開発環境: SQLite使用（高速フィードバック）
 		if !database.IsInMemoryDBEnabled() {
 			t.Skip("開発環境テスト: USE_INMEMORY_DB=true が必要")
@@ -43,6 +46,10 @@ func TestEnvironmentStrategy_DevelopmentVsProduction(t *testing.T) {
 	})
 
 	t.Run("Production_MySQL_QualityAssurance", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("データベーステストは-shortフラグ使用時はスキップ")
+		}
+
 		// 本番環境: MySQL使用（品質保証）
 		if database.IsInMemoryDBEnabled() {
 			t.Skip("本番環境テスト: MySQLが必要")

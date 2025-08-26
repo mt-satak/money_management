@@ -21,8 +21,11 @@ import (
 
 // TestLoginHandler_Success 正しい認証情報でログインが成功することを検証（HTTP200とJWTトークンの返却を期待）
 func TestLoginHandler_Success(t *testing.T) {
-	// ハンドラーテストは並列化を無効にして安定性を重視
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
 
+	// ハンドラーテストは並列化を無効にして安定性を重視
 	db, err := setupTestDB()
 	assert.NoError(t, err, "テスト用データベースのセットアップに失敗しました")
 	defer cleanupTestResources(db)

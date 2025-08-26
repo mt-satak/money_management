@@ -19,6 +19,10 @@ import (
 
 // TestConnectionPoolOptimization_BasicFunctionality 基本的な接続プール最適化テスト
 func TestConnectionPoolOptimization_BasicFunctionality(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
