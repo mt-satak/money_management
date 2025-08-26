@@ -25,7 +25,9 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(middleware.GetJWTSecret())
+	secret, err := middleware.GetJWTSecret()
+	assert.NoError(t, err)
+	tokenString, err := token.SignedString(secret)
 	assert.NoError(t, err)
 
 	t.Run("正常なログアウト", func(t *testing.T) {
@@ -86,7 +88,9 @@ func TestGetTokenStatusHandler(t *testing.T) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(middleware.GetJWTSecret())
+	secret, err := middleware.GetJWTSecret()
+	assert.NoError(t, err)
+	tokenString, err := token.SignedString(secret)
 	assert.NoError(t, err)
 
 	t.Run("有効なトークンのステータス", func(t *testing.T) {

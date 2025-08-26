@@ -39,7 +39,11 @@ func generateValidToken(userID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString(GetJWTSecret())
+	secret, err := GetJWTSecret()
+	if err != nil {
+		panic("テスト用JWT秘密鍵の取得に失敗: " + err.Error())
+	}
+	tokenString, _ := token.SignedString(secret)
 	return tokenString
 }
 
@@ -55,7 +59,11 @@ func generateExpiredToken(userID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString(GetJWTSecret())
+	secret, err := GetJWTSecret()
+	if err != nil {
+		panic("テスト用JWT秘密鍵の取得に失敗: " + err.Error())
+	}
+	tokenString, _ := token.SignedString(secret)
 	return tokenString
 }
 

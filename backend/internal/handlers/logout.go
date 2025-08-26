@@ -29,7 +29,11 @@ func LogoutHandler(c *gin.Context) {
 
 	// JWTトークンを解析してExpiration時刻を取得
 	token, err := jwt.ParseWithClaims(tokenString, &middleware.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return middleware.GetJWTSecret(), nil
+		secret, err := middleware.GetJWTSecret()
+		if err != nil {
+			return nil, err
+		}
+		return secret, nil
 	})
 
 	if err != nil {

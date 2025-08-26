@@ -186,7 +186,11 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 		},
 	})
 
-	tokenString, err := token.SignedString(middleware.GetJWTSecret())
+	secret, err := middleware.GetJWTSecret()
+	if err != nil {
+		return "", err
+	}
+	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return "", err
 	}
@@ -197,7 +201,11 @@ func (j *JWTService) GenerateToken(userID uint) (string, error) {
 // ValidateToken JWTトークン検証
 func (j *JWTService) ValidateToken(tokenString string) (uint, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &middleware.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return middleware.GetJWTSecret(), nil
+		secret, err := middleware.GetJWTSecret()
+		if err != nil {
+			return nil, err
+		}
+		return secret, nil
 	})
 
 	if err != nil {

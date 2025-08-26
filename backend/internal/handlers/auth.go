@@ -54,7 +54,12 @@ func LoginHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 		})
 
 		// トークンに署名
-		tokenString, err := token.SignedString(middleware.GetJWTSecret())
+		secret, err := middleware.GetJWTSecret()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT秘密鍵の取得に失敗しました"})
+			return
+		}
+		tokenString, err := token.SignedString(secret)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "トークンを生成できませんでした"})
 			return
@@ -133,7 +138,12 @@ func RegisterHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 		})
 
 		// トークンに署名
-		tokenString, err := token.SignedString(middleware.GetJWTSecret())
+		secret, err := middleware.GetJWTSecret()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT秘密鍵の取得に失敗しました"})
+			return
+		}
+		tokenString, err := token.SignedString(secret)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "トークンを生成できませんでした"})
 			return
