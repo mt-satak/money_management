@@ -4,13 +4,6 @@
 # エラーハンドリングの有効化
 set -e
 
-# スクリプトの実行権限をチェック
-if [ ! -x "$0" ]; then
-    echo "❌ エラー: このスクリプトに実行権限がありません。"
-    echo "   解決方法: chmod +x $0"
-    exit 1
-fi
-
 # gofmtが利用可能かチェック
 if ! command -v gofmt &> /dev/null; then
     echo "❌ エラー: gofmtが見つかりません。Goがインストールされているか確認してください。"
