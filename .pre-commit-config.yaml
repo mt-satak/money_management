@@ -32,11 +32,11 @@ repos:
     hooks:
       - id: prettier-frontend
         name: Prettier (Frontend)
-        entry: bash -c 'cd frontend && for file in "$@"; do file_rel=${file#frontend/}; npx prettier --write "$file_rel"; done' --
+        entry: bash -c 'files=(); for file in "$@"; do files+=("${file#frontend/}"); done; if [ ${#files[@]} -gt 0 ]; then cd frontend && npx prettier --write "${files[@]}"; fi' --
         language: system
         files: '^frontend/.*\.(ts|tsx|js|jsx|css|scss|json|html|md)$'
         pass_filenames: true
-        description: Format frontend files using Prettier
+        description: Format frontend files using Prettier (batch processing)
 
   # YAML/JSON formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
