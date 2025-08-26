@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: go-fmt
         name: Go Format
-        entry: bash -c 'for file in "$@"; do gofmt -w "$file"; done' --
+        entry: scripts/format-go.sh
         language: system
         files: '\.go$'
         pass_filenames: true
@@ -32,11 +32,11 @@ repos:
     hooks:
       - id: prettier-frontend
         name: Prettier (Frontend)
-        entry: bash -c 'files=(); for file in "$@"; do files+=("${file#frontend/}"); done; if [ ${#files[@]} -gt 0 ]; then cd frontend && npx prettier --write "${files[@]}"; fi' --
+        entry: scripts/format-frontend.sh
         language: system
         files: '^frontend/.*\.(ts|tsx|js|jsx|css|scss|json|html|md)$'
         pass_filenames: true
-        description: Format frontend files using Prettier (batch processing)
+        description: Format frontend files using Prettier
 
   # YAML/JSON formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
