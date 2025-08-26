@@ -42,7 +42,6 @@ export default defineConfig({
     /* Optimized for parallel execution */
     launchOptions: {
       args: [
-        "--disable-dev-shm-usage",
         "--disable-extensions",
         "--disable-gpu",
         "--disable-web-security",
