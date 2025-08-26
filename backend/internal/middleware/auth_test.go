@@ -100,7 +100,8 @@ func TestGetJWTSecret(t *testing.T) {
 	testSecret := "test-jwt-secret-for-testing-purposes-32chars"
 	os.Setenv("JWT_SECRET", testSecret)
 
-	secret := GetJWTSecret()
+	secret, err := GetJWTSecret()
+	assert.NoError(t, err, "JWTシークレットの取得でエラーが発生しました")
 	assert.NotNil(t, secret, "JWTシークレットがnilです")
 	assert.Greater(t, len(secret), 0, "JWTシークレットが空です")
 	assert.Equal(t, []byte(testSecret), secret, "期待されるシークレットキーと異なります")
