@@ -22,7 +22,7 @@ import (
 // 本番環境と同じMySQLを使用するが、テスト用の設定とデータベース名を使用
 func SetupTestDB() (*gorm.DB, error) {
 	// テスト用データベース接続文字列（環境変数ベース）
-	// GitHub Actions環境では環境変数が設定される
+	// CI/CD環境（GitHub Actions、GitLab CI等）やローカル環境で環境変数が設定される
 	dbHost := config.GetStringEnv("DB_HOST", "localhost")
 	dbPort := config.GetStringEnv("DB_PORT", "3306")
 	dbUser := config.GetStringEnv("DB_USER", "root")

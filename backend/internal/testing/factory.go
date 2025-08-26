@@ -274,43 +274,43 @@ func (f *TestDataFactory) CreateStandardTestScenario() (*StandardTestData, error
 func (f *TestDataFactory) CreateLightweightTestScenario() (*StandardTestData, error) {
 	data := &StandardTestData{}
 
-	err := f.db.Transaction(func(tx *gorm.DB) error {
-		factory := NewTestDataFactory(tx)
+	// 最小限のユーザーデータ（短い名前・ID）
+	timestamp := time.Now().UnixNano()
+	suffix := fmt.Sprintf("_%d", timestamp%1000) // より短いサフィックス
 
-		// 最小限のユーザーデータ（短い名前・ID）
-		timestamp := time.Now().UnixNano()
-		suffix := fmt.Sprintf("_%d", timestamp%1000) // より短いサフィックス
+	// Step 1: ユーザー作成
+	var err error
+	data.User1, err = f.NewUser().WithName("U1").WithAccountID("u1" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("軽量テスト User1作成失敗: %w", err)
+	}
 
-		var err error
-		data.User1, err = factory.NewUser().WithName("U1").WithAccountID("u1" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	data.User2, err = f.NewUser().WithName("U2").WithAccountID("u2" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("軽量テスト User2作成失敗: %w", err)
+	}
 
-		data.User2, err = factory.NewUser().WithName("U2").WithAccountID("u2" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	data.User3, err = f.NewUser().WithName("U3").WithAccountID("u3" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("軽量テスト User3作成失敗: %w", err)
+	}
 
-		data.User3, err = factory.NewUser().WithName("U3").WithAccountID("u3" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	// Step 2: IDの確認
+	if data.User1.ID == 0 || data.User2.ID == 0 {
+		return nil, fmt.Errorf("軽量テスト: ユーザーIDが正しく設定されていません: User1.ID=%d, User2.ID=%d", data.User1.ID, data.User2.ID)
+	}
 
-		// シンプルな家計簿（1つのアイテムのみ）
-		data.Bill, data.Items, err = factory.NewBill().
-			WithRequester(data.User1.ID).
-			WithPayer(data.User2.ID).
-			AddItems(
-				Item("テスト", 1000.0), // 最小限のアイテム
-			).
-			Build()
-
-		return err
-	})
+	// Step 3: シンプルな家計簿（1つのアイテムのみ）
+	data.Bill, data.Items, err = f.NewBill().
+		WithRequester(data.User1.ID).
+		WithPayer(data.User2.ID).
+		AddItems(
+			Item("テスト", 1000.0), // 最小限のアイテム
+		).
+		Build()
 
 	if err != nil {
-		return nil, fmt.Errorf("軽量テストシナリオの作成に失敗: %w", err)
+		return nil, fmt.Errorf("軽量テスト 家計簿作成失敗: %w", err)
 	}
 
 	return data, nil
@@ -320,45 +320,44 @@ func (f *TestDataFactory) CreateLightweightTestScenario() (*StandardTestData, er
 func (f *TestDataFactory) CreateFullTestScenario() (*StandardTestData, error) {
 	data := &StandardTestData{}
 
-	err := f.db.Transaction(func(tx *gorm.DB) error {
-		factory := NewTestDataFactory(tx)
+	// 一意性を保証するためのタイムスタンプサフィックス
+	timestamp := time.Now().UnixNano()
+	suffix := fmt.Sprintf("_%d", timestamp%10000)
 
-		// ユーザー3名作成
-		// 一意性を保証するためのタイムスタンプサフィックス
-		timestamp := time.Now().UnixNano()
-		suffix := fmt.Sprintf("_%d", timestamp%10000)
+	// Step 1: ユーザー作成（トランザクションを使わずに個別に作成）
+	var err error
+	data.User1, err = f.NewUser().WithName("山田太郎").WithAccountID("yamada" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("User1作成失敗: %w", err)
+	}
 
-		var err error
-		data.User1, err = factory.NewUser().WithName("山田太郎").WithAccountID("yamada" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	data.User2, err = f.NewUser().WithName("佐藤花子").WithAccountID("sato" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("User2作成失敗: %w", err)
+	}
 
-		data.User2, err = factory.NewUser().WithName("佐藤花子").WithAccountID("sato" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	data.User3, err = f.NewUser().WithName("田中三郎").WithAccountID("tanaka" + suffix).Build()
+	if err != nil {
+		return nil, fmt.Errorf("User3作成失敗: %w", err)
+	}
 
-		data.User3, err = factory.NewUser().WithName("田中三郎").WithAccountID("tanaka" + suffix).Build()
-		if err != nil {
-			return err
-		}
+	// Step 2: IDの確認
+	if data.User1.ID == 0 || data.User2.ID == 0 {
+		return nil, fmt.Errorf("ユーザーIDが正しく設定されていません: User1.ID=%d, User2.ID=%d", data.User1.ID, data.User2.ID)
+	}
 
-		// 家計簿作成（User1が請求者、User2が支払者）
-		data.Bill, data.Items, err = factory.NewBill().
-			WithRequester(data.User1.ID).
-			WithPayer(data.User2.ID).
-			AddItems(
-				Item("食費", 5000.0),
-				Item("光熱費", 8000.0),
-			).
-			Build()
-
-		return err
-	})
+	// Step 3: 家計簿作成（User1が請求者、User2が支払者）
+	data.Bill, data.Items, err = f.NewBill().
+		WithRequester(data.User1.ID).
+		WithPayer(data.User2.ID).
+		AddItems(
+			Item("食費", 5000.0),
+			Item("光熱費", 8000.0),
+		).
+		Build()
 
 	if err != nil {
-		return nil, fmt.Errorf("標準テストシナリオの作成に失敗: %w", err)
+		return nil, fmt.Errorf("家計簿作成失敗: %w", err)
 	}
 
 	return data, nil

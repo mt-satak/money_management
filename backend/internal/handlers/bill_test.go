@@ -83,7 +83,27 @@ func logTestError(t *testing.T, err error, context string) {
 // 本番環境と同じMySQL 8.0を使用してテスト環境を構築
 // グローバル変数は変更せず、独立したDB接続を返す
 func setupTestDB() (*gorm.DB, error) {
-	return database.SetupTestDB()
+	db, err := database.SetupTestDB()
+	if err != nil {
+		return nil, fmt.Errorf("データベース接続エラー: %w", err)
+	}
+
+	// データベース接続の有効性を確認
+	if db == nil {
+		return nil, fmt.Errorf("データベース接続がnilです")
+	}
+
+	// 接続テスト
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("SQL DB接続取得エラー: %w", err)
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		return nil, fmt.Errorf("データベースping失敗: %w", err)
+	}
+
+	return db, nil
 }
 
 // cleanupTestResources リソースの適切なクリーンアップを実行
@@ -308,6 +328,16 @@ func TestCreateBillHandler_Success(t *testing.T) {
 		t.Skipf("テストデータのセットアップに失敗、テストをスキップ: %v", err)
 		return
 	}
+
+	// テストデータの整合性確認
+	if testData.User1.ID == 0 {
+		t.Fatal("User1のIDが設定されていません")
+	}
+	if testData.User2.ID == 0 {
+		t.Fatal("User2のIDが設定されていません")
+	}
+
+	t.Logf("テストデータ確認: User1 ID=%d, User2 ID=%d", testData.User1.ID, testData.User2.ID)
 
 	router := setupRouter()
 	router.POST("/bills", setUserID(testData.User1.ID), CreateBillHandlerWithDB(db))

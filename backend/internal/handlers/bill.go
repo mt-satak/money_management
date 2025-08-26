@@ -99,7 +99,11 @@ func CreateBillHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 		// データベースに保存（デッドロック対応のリトライ機構付き）
 		log.Printf("🔍 About to create bill: Year=%d, Month=%d, RequesterID=%d", bill.Year, bill.Month, bill.RequesterID)
 
-		const maxRetries = 3
+		const (
+			maxRetries         = 3
+			baseBackoffMs      = 100 // ベースバックオフ時間（ミリ秒）
+			backoffIncrementMs = 50  // バックオフ増分（ミリ秒）
+		)
 		var result *gorm.DB
 		var err error
 
@@ -114,7 +118,10 @@ func CreateBillHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 			// デッドロックエラーの場合はリトライ
 			if strings.Contains(err.Error(), "Deadlock found when trying to get lock") {
 				log.Printf("🔄 Deadlock detected, retrying... (attempt %d/%d)", i+1, maxRetries)
-				time.Sleep(time.Duration(100*(1<<i)) * time.Millisecond) // 指数バックオフ: 100ms, 200ms, 400ms
+				// 穏やかな指数バックオフ: baseTime + incrementTime * attempt^2
+				waitTime := time.Duration(baseBackoffMs+backoffIncrementMs*i*i) * time.Millisecond
+				log.Printf("🕐 Waiting %v before retry", waitTime)
+				time.Sleep(waitTime)
 				continue
 			}
 

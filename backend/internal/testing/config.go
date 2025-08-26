@@ -179,9 +179,10 @@ func (c *TestConfig) ShouldSkipParallel() bool {
 
 // GetRetryBackoff リトライ間隔を取得
 func (c *TestConfig) GetRetryBackoff(attempt int) time.Duration {
-	// 指数バックオフ: baseTime * 2^attempt
+	// 穏やかなバックオフ: baseTime + (baseTime * attempt * attempt / 2) で漸増
 	baseTime := time.Duration(c.RetryBackoffMs) * time.Millisecond
-	return baseTime * time.Duration(1<<attempt)
+	additional := baseTime * time.Duration(attempt*attempt) / 2
+	return baseTime + additional
 }
 
 // LogConfig 設定内容をログ出力
