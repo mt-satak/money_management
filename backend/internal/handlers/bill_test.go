@@ -312,9 +312,14 @@ func TestCreateBillHandler_Success(t *testing.T) {
 	router := setupRouter()
 	router.POST("/bills", setUserID(testData.User1.ID), CreateBillHandlerWithDB(db))
 
+	// テスト間の競合を避けるため動的な年月を生成
+	now := time.Now()
+	uniqueYear := now.Year() + (int(now.UnixNano()) % 1000) // 現在年 + ナノ秒ベースのオフセット
+	uniqueMonth := (int(now.UnixNano()/1000000) % 12) + 1   // 1-12の範囲
+
 	requestBody := map[string]interface{}{
-		"year":     2025,
-		"month":    1,
+		"year":     uniqueYear,
+		"month":    uniqueMonth,
 		"payer_id": testData.User2.ID,
 	}
 	jsonData, _ := json.Marshal(requestBody)
