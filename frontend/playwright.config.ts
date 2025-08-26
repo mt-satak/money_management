@@ -42,7 +42,6 @@ export default defineConfig({
     /* Optimized for parallel execution */
     launchOptions: {
       args: [
-        "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-extensions",
         "--disable-gpu",
