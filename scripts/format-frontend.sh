@@ -37,9 +37,9 @@ for file in "$@"; do
     rel_file="${file#frontend/}"
     if [ -f "$rel_file" ]; then
         files+=("$rel_file")
-        echo "   💅 フォーマット対象: $rel_file"
+        echo "   💅 フォーマット対象: \"$rel_file\""
     else
-        echo "⚠️  警告: ファイルが存在しません: $file"
+        echo "⚠️  警告: ファイルが存在しません: \"$file\""
     fi
 done
 

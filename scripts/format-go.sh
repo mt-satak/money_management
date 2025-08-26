@@ -21,10 +21,10 @@ echo "🔧 Goコードフォーマットを実行中..."
 # 各ファイルをフォーマット
 for file in "$@"; do
     if [ -f "$file" ]; then
-        echo "   📝 フォーマット中: $file"
+        echo "   📝 フォーマット中: \"$file\""
         gofmt -w "$file"
     else
-        echo "⚠️  警告: ファイルが存在しません: $file"
+        echo "⚠️  警告: ファイルが存在しません: \"$file\""
     fi
 done
 
