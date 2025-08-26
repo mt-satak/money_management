@@ -1,0 +1,523 @@
+# =======================================================
+# Main Tests Workflow - メインブランチ統合時フルテスト実行
+# Money Management Application
+# =======================================================
+
+name: "Main Branch Tests"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test type to run"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - "full"
+          - "unit-only"
+          - "e2e-only"
+          - "performance"
+
+env:
+  # 本格テスト用環境変数
+  JWT_SECRET: "test-jwt-secret-for-testing-purposes-32chars"
+  GO_VERSION: "1.23"
+  NODE_VERSION: "20"
+
+jobs:
+  # =======================================================
+  # 包括的バックエンドテスト (Go)
+  # =======================================================
+  backend-comprehensive:
+    name: "Backend Comprehensive Tests"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        test-type: ["unit", "integration", "contract"]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_test_password
+          MYSQL_DATABASE: money_management_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "Cache Go Modules"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            ${{ runner.os }}-go-
+
+      - name: "Wait for MySQL"
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot_test_password --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: "Download Go Dependencies"
+        working-directory: backend
+        run: |
+          echo "📦 Go依存関係をダウンロード中..."
+          go mod download
+          go mod tidy
+
+      - name: "Run Unit Tests"
+        if: matrix.test-type == 'unit'
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+        run: |
+          echo "🧪 Running unit tests with coverage..."
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
+          go tool cover -html=coverage.out -o coverage.html
+          go tool cover -func=coverage.out | tail -1
+
+      - name: "Run Integration Tests"
+        if: matrix.test-type == 'integration'
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: root
+          DB_PASSWORD: root_test_password
+        run: |
+          echo "🔄 Running integration tests..."
+          go test -v ./internal/handlers/... ./internal/database/...
+
+      - name: "Run Contract Tests"
+        if: matrix.test-type == 'contract'
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+        run: |
+          echo "📋 Running contract tests..."
+          go test -v ./internal/testing -run "Contract"
+          go test -v ./internal/handlers -run "ContractTestSuite"
+
+      - name: "Upload Coverage Reports"
+        if: matrix.test-type == 'unit'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage.out
+            backend/coverage.html
+          retention-days: 30
+
+  # =======================================================
+  # 包括的フロントエンドテスト (Node.js)
+  # =======================================================
+  frontend-comprehensive:
+    name: "Frontend Comprehensive Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Cache Frontend Dependencies"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-frontend-
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: |
+          if [ -d "node_modules" ] && [ -f "package-lock.json" ]; then
+            echo "📦 キャッシュから依存関係を復元済み"
+            npm ci --prefer-offline --no-audit
+          else
+            echo "📦 依存関係を新規インストール中..."
+            npm ci
+          fi
+
+      - name: "Run TypeScript Type Check"
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: "Run Frontend Unit Tests with Coverage"
+        working-directory: frontend
+        env:
+          NODE_ENV: test
+        run: |
+          echo "🧪 Running frontend unit tests with coverage..."
+          npm run test:unit:coverage
+
+      - name: "Cache Vite Build"
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules/.vite
+            frontend/dist
+          key: ${{ runner.os }}-vite-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/src/**/*', 'frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vite-${{ env.NODE_VERSION }}-
+
+      - name: "Build Frontend (Production)"
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for production..."
+          npm run build
+
+      - name: "Upload Frontend Coverage"
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 30
+
+  # =======================================================
+  # フル E2E テストスイート (Playwright)
+  # =======================================================
+  e2e-comprehensive:
+    name: "E2E Comprehensive Tests"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        test-group:
+          ["smoke", "regression", "integration", "visual", "performance"]
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: npm ci
+
+      - name: "Cache Playwright Browsers"
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ matrix.test-group }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-${{ matrix.test-group }}-
+            ${{ runner.os }}-playwright-
+
+      - name: "Install Playwright Browsers"
+        working-directory: frontend
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "🎭 Playwrightブラウザ (${{ matrix.test-group }}) がキャッシュから復元されました"
+          else
+            echo "🎭 Playwrightブラウザ (${{ matrix.test-group }}) をインストール中..."
+            npx playwright install --with-deps
+          fi
+
+      - name: "Setup Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      - name: "Cache Docker Images"
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-${{ matrix.test-group }}-${{ hashFiles('docker-compose.test.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-${{ matrix.test-group }}-
+            ${{ runner.os }}-docker-
+
+      - name: "Start Test Environment"
+        run: |
+          echo "🚀 Starting full test environment..."
+          if [ -f "docker-compose.test.yml" ]; then
+            docker-compose -f docker-compose.test.yml pull
+            docker-compose -f docker-compose.test.yml up -d --wait
+            echo "⏰ Waiting for services to be ready..."
+            sleep 20
+          else
+            echo "⚠️ docker-compose.test.yml not found, using default"
+            docker-compose up -d --wait
+            sleep 20
+          fi
+
+      - name: "Run Smoke Tests"
+        if: matrix.test-group == 'smoke'
+        working-directory: frontend
+        run: |
+          echo "🔥 Running smoke tests..."
+          npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
+
+      - name: "Run Regression Tests"
+        if: matrix.test-group == 'regression'
+        working-directory: frontend
+        run: |
+          echo "🔄 Running regression tests..."
+          npx playwright test tests/e2e/complete-user-flow.spec.ts --reporter=list
+
+      - name: "Run Integration Tests"
+        if: matrix.test-group == 'integration'
+        working-directory: frontend
+        run: |
+          echo "🔗 Running integration tests..."
+          npx playwright test tests/e2e/navigation-fixes.spec.ts tests/e2e/payer-bills-display.spec.ts --reporter=list
+
+      - name: "Run Visual Regression Tests"
+        if: matrix.test-group == 'visual'
+        working-directory: frontend
+        env:
+          VISUAL_REGRESSION: "true"
+        run: |
+          echo "👁️ Running visual regression tests..."
+          npx playwright test tests/e2e/visual-regression.spec.ts --reporter=list
+
+      - name: "Run Performance Tests"
+        if: matrix.test-group == 'performance'
+        working-directory: frontend
+        run: |
+          echo "⚡ Running performance tests..."
+          npx playwright test tests/e2e/test-suite-optimization.spec.ts --reporter=list
+
+      - name: "Upload Playwright Report"
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.test-group }}
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: "Cleanup Test Environment"
+        if: always()
+        run: |
+          if [ -f "docker-compose.test.yml" ]; then
+            docker-compose -f docker-compose.test.yml down -v
+          else
+            docker-compose down -v
+          fi
+
+  # =======================================================
+  # セキュリティ&品質監査
+  # =======================================================
+  security-audit:
+    name: "Security & Quality Audit"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: npm ci
+
+      - name: "Run Go Security Audit"
+        working-directory: backend
+        run: |
+          echo "🔒 Running Go security audit..."
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: "Run npm Security Audit"
+        working-directory: frontend
+        run: |
+          echo "🔒 Running npm security audit..."
+          npm audit --audit-level=moderate
+
+      - name: "Run Go Static Analysis"
+        working-directory: backend
+        run: |
+          echo "🔍 Running Go static analysis..."
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+
+  # =======================================================
+  # パフォーマンスベンチマーク
+  # =======================================================
+  performance-benchmark:
+    name: "Performance Benchmark"
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'performance' || github.event.inputs.test_type == 'full'
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_test_password
+          MYSQL_DATABASE: money_management_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "Cache Go Modules for Performance Tests"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            ${{ runner.os }}-go-
+
+      - name: "Wait for MySQL"
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot_test_password --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: "Run Performance Benchmarks"
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: root
+          DB_PASSWORD: root_test_password
+        run: |
+          echo "⚡ Running performance benchmarks..."
+          go test -bench=. -benchmem -run=^$ ./... || echo "No benchmarks found"
+
+  # =======================================================
+  # テスト結果統合レポート
+  # =======================================================
+  test-report:
+    name: "Generate Test Report"
+    runs-on: ubuntu-latest
+    needs:
+      [
+        backend-comprehensive,
+        frontend-comprehensive,
+        e2e-comprehensive,
+        security-audit,
+      ]
+    if: always()
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Download Coverage Artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-coverage"
+          path: coverage-reports/
+
+      - name: "Generate Comprehensive Test Report"
+        run: |
+          echo "## 🧪 Main Branch Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend Tests" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.backend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.backend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contract Tests | ${{ needs.backend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend Tests" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests + Coverage | ${{ needs.frontend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript Check | ${{ needs.frontend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production Build | ${{ needs.frontend-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Group | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Smoke Tests | ${{ needs.e2e-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Regression Tests | ${{ needs.e2e-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.e2e-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Visual Tests | ${{ needs.e2e-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Tests | ${{ needs.e2e-comprehensive.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security & Quality" >> $GITHUB_STEP_SUMMARY
+          echo "| Check Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit | ${{ needs.security-audit.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Analysis | ${{ needs.security-audit.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated on: $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: "Upload Test Reports"
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-test-reports
+          path: coverage-reports/
+          retention-days: 90

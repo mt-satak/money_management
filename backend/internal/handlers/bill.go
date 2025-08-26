@@ -96,16 +96,46 @@ func CreateBillHandlerWithDB(db *gorm.DB) gin.HandlerFunc {
 			Status:      "pending",   // 初期状態は作成中
 		}
 
-		// データベースに保存
+		// データベースに保存（デッドロック対応のリトライ機構付き）
 		log.Printf("🔍 About to create bill: Year=%d, Month=%d, RequesterID=%d", bill.Year, bill.Month, bill.RequesterID)
-		result := db.Create(&bill)
+
+		const (
+			maxRetries         = 3
+			baseBackoffMs      = 100 // ベースバックオフ時間（ミリ秒）
+			backoffIncrementMs = 50  // バックオフ増分（ミリ秒）
+		)
+		var result *gorm.DB
+		var err error
+
+		for i := 0; i < maxRetries; i++ {
+			result = db.Create(&bill)
+			err = result.Error
+
+			if err == nil {
+				break
+			}
+
+			// デッドロックエラーの場合はリトライ
+			if strings.Contains(err.Error(), "Deadlock found when trying to get lock") {
+				log.Printf("🔄 Deadlock detected, retrying... (attempt %d/%d)", i+1, maxRetries)
+				// 穏やかな指数バックオフ: baseTime + incrementTime * attempt^2
+				waitTime := time.Duration(baseBackoffMs+backoffIncrementMs*i*i) * time.Millisecond
+				log.Printf("🕐 Waiting %v before retry", waitTime)
+				time.Sleep(waitTime)
+				continue
+			}
+
+			// デッドロック以外のエラーは即座に終了
+			break
+		}
+
 		log.Printf("🔍 DB Create completed, checking for errors...")
 
-		if result.Error != nil {
-			log.Printf("🔍 CreateBill Error detected: %s", result.Error.Error())
+		if err != nil {
+			log.Printf("🔍 CreateBill Error detected: %s", err.Error())
 
 			// 制約エラー（重複）の場合は409 Conflictを返す
-			errorStr := result.Error.Error()
+			errorStr := err.Error()
 			log.Printf("🔍 Checking if error contains 'Duplicate entry': %t", strings.Contains(errorStr, "Duplicate entry"))
 
 			if strings.Contains(errorStr, "Duplicate entry") {

@@ -39,7 +39,11 @@ func generateValidToken(userID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString(GetJWTSecret())
+	secret, err := GetJWTSecret()
+	if err != nil {
+		panic("テスト用JWT秘密鍵の取得に失敗: " + err.Error())
+	}
+	tokenString, _ := token.SignedString(secret)
 	return tokenString
 }
 
@@ -55,7 +59,11 @@ func generateExpiredToken(userID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString(GetJWTSecret())
+	secret, err := GetJWTSecret()
+	if err != nil {
+		panic("テスト用JWT秘密鍵の取得に失敗: " + err.Error())
+	}
+	tokenString, _ := token.SignedString(secret)
 	return tokenString
 }
 
@@ -92,7 +100,8 @@ func TestGetJWTSecret(t *testing.T) {
 	testSecret := "test-jwt-secret-for-testing-purposes-32chars"
 	os.Setenv("JWT_SECRET", testSecret)
 
-	secret := GetJWTSecret()
+	secret, err := GetJWTSecret()
+	assert.NoError(t, err, "JWTシークレットの取得でエラーが発生しました")
 	assert.NotNil(t, secret, "JWTシークレットがnilです")
 	assert.Greater(t, len(secret), 0, "JWTシークレットが空です")
 	assert.Equal(t, []byte(testSecret), secret, "期待されるシークレットキーと異なります")

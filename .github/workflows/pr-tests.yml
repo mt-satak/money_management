@@ -1,0 +1,360 @@
+# =======================================================
+# PR Tests Workflow - プルリクエスト時自動テスト実行
+# Money Management Application
+# =======================================================
+
+name: "PR Tests"
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+# 同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # テスト用環境変数
+  JWT_SECRET: "test-jwt-secret-for-testing-purposes-32chars"
+  GO_VERSION: "1.23"
+  NODE_VERSION: "20"
+
+jobs:
+  # =======================================================
+  # バックエンドテスト (Go)
+  # =======================================================
+  backend-tests:
+    name: "Backend Tests"
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_test_password
+          MYSQL_DATABASE: money_management_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "Cache Go Modules"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            ${{ runner.os }}-go-
+
+      - name: "Wait for MySQL"
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot_test_password --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: "Download Go Dependencies"
+        working-directory: backend
+        run: |
+          echo "📦 Go依存関係をダウンロード中..."
+          go mod download
+          go mod tidy
+
+      - name: "Run Go Tests"
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: root
+          DB_PASSWORD: root_test_password
+        run: |
+          echo "🧪 Running backend tests..."
+          go test -v -short ./...
+
+      - name: "Run Go Tests with Coverage"
+        working-directory: backend
+        env:
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: root
+          DB_PASSWORD: root_test_password
+        run: |
+          echo "📊 Running tests with coverage..."
+          go test -v -short -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
+
+  # =======================================================
+  # フロントエンドテスト (Node.js)
+  # =======================================================
+  frontend-tests:
+    name: "Frontend Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Cache Frontend Dependencies"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: |
+          if [ -d "node_modules" ] && [ -f "package-lock.json" ]; then
+            echo "📦 キャッシュから依存関係を復元済み"
+            npm ci --prefer-offline --no-audit
+          else
+            echo "📦 依存関係を新規インストール中..."
+            npm ci
+          fi
+
+      - name: "Run TypeScript Type Check"
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: "Run Frontend Unit Tests"
+        working-directory: frontend
+        env:
+          NODE_ENV: test
+        run: |
+          echo "🧪 Running frontend unit tests..."
+          npm run test:unit
+
+      - name: "Build Frontend"
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend..."
+          npm run build
+
+  # =======================================================
+  # E2E スモークテスト (Playwright)
+  # =======================================================
+  e2e-smoke-tests:
+    name: "E2E Smoke Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: npm ci
+
+      - name: "Cache Playwright Browsers"
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: "Install Playwright Browsers"
+        working-directory: frontend
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "🎭 Playwrightブラウザがキャッシュから復元されました"
+            npx playwright install-deps
+          else
+            echo "🎭 Playwrightブラウザをインストール中..."
+            npx playwright install --with-deps
+          fi
+
+      - name: "Build Frontend"
+        working-directory: frontend
+        run: |
+          echo "🏗️ E2Eテスト用フロントエンドをビルド中..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        working-directory: frontend
+        run: |
+          echo "🚀 フロントエンドプレビューサーバーを起動中..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ サーバーの起動を待機中..."
+
+          # サーバーが起動するまで指数バックオフで待機（効率的な健康診断）
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          DEV_PORT=${DEV_PORT:-3000}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ プレビューサーバーが起動しました (ポート${PREVIEW_PORT})"
+              break
+            elif curl -f http://localhost:${DEV_PORT}/ > /dev/null 2>&1; then
+              echo "✅ プレビューサーバーが起動しました (ポート${DEV_PORT})"
+              break
+            fi
+
+            # 指数バックオフ: 1s, 2s, 4s, 8s, 16s, 32s (最大32秒)
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "サーバー起動を待機中... (試行 $i/$MAX_ATTEMPTS, ${WAIT_TIME}秒待機)"
+            sleep $WAIT_TIME
+          done
+
+      - name: "Run E2E Smoke Tests"
+        working-directory: frontend
+        run: |
+          echo "🔥 E2Eスモークテスト実行中..."
+          npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
+
+      - name: "Upload Playwright Report"
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-smoke
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: "Cleanup Preview Server"
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 プレビューサーバーを停止中..."
+            kill $SERVER_PID || true
+            sleep 2
+            # 念のため、ポートを使用しているプロセスを強制終了
+            pkill -f "vite.*preview" || true
+            echo "✅ プレビューサーバーの停止完了"
+          fi
+
+  # =======================================================
+  # コード品質チェック
+  # =======================================================
+  code-quality:
+    name: "Code Quality"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Cache pre-commit"
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+
+      - name: "Install Python and pre-commit"
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit
+
+      - name: "Install Frontend Dependencies"
+        working-directory: frontend
+        run: npm ci
+
+      - name: "Run pre-commit hooks"
+        run: |
+          echo "🎨 Running code quality checks..."
+          pre-commit run --all-files
+
+  # =======================================================
+  # テスト結果サマリー
+  # =======================================================
+  test-summary:
+    name: "Test Summary"
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, e2e-smoke-tests, code-quality]
+    if: always()
+
+    steps:
+      - name: "Test Results Summary"
+        run: |
+          echo "## 🧪 PR Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Tests | ${{ needs.backend-tests.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests | ${{ needs.frontend-tests.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Smoke Tests | ${{ needs.e2e-smoke-tests.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 全テスト成功時の処理
+          if [[ "${{ needs.backend-tests.result }}" == "success" && \
+                "${{ needs.frontend-tests.result }}" == "success" && \
+                "${{ needs.e2e-smoke-tests.result }}" == "success" && \
+                "${{ needs.code-quality.result }}" == "success" ]]; then
+            echo "🎉 All tests passed! PR is ready for review." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "❌ Some tests failed. Please check the details above." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

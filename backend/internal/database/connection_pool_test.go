@@ -14,11 +14,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"money_management/testconfig"
+	testingutil "money_management/internal/testing"
 )
 
 // TestConnectionPoolOptimization_BasicFunctionality 基本的な接続プール最適化テスト
 func TestConnectionPoolOptimization_BasicFunctionality(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -48,6 +52,10 @@ func TestConnectionPoolOptimization_BasicFunctionality(t *testing.T) {
 
 // TestConnectionPoolOptimization_ConfigurationUpdate 設定更新テスト
 func TestConnectionPoolOptimization_ConfigurationUpdate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -85,6 +93,10 @@ func TestConnectionPoolOptimization_ConfigurationUpdate(t *testing.T) {
 
 // TestConnectionPoolOptimization_AutoOptimization 自動最適化テスト
 func TestConnectionPoolOptimization_AutoOptimization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -124,6 +136,10 @@ func TestConnectionPoolOptimization_AutoOptimization(t *testing.T) {
 
 // TestConnectionPoolOptimization_LoadBasedOptimization 負荷ベース最適化テスト
 func TestConnectionPoolOptimization_LoadBasedOptimization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -163,6 +179,10 @@ func TestConnectionPoolOptimization_LoadBasedOptimization(t *testing.T) {
 
 // TestConnectionPoolOptimization_EnvironmentSpecific 環境別設定テスト
 func TestConnectionPoolOptimization_EnvironmentSpecific(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	testCases := []struct {
 		name        string
 		useInMemory bool
@@ -230,6 +250,10 @@ func TestConnectionPoolOptimization_EnvironmentSpecific(t *testing.T) {
 
 // TestConnectionPoolOptimization_PerformanceBenchmark パフォーマンスベンチマーク
 func TestConnectionPoolOptimization_PerformanceBenchmark(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -282,6 +306,10 @@ func measureConnectionPerformance(t *testing.T, db *gorm.DB, phase string, query
 
 // TestConnectionPoolOptimization_MetricsExport メトリクスエクスポートテスト
 func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -289,7 +317,7 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	optimizer := NewPoolOptimizer(db)
 
 	// メトリクス統合テスト
-	collector := testconfig.GetMetricsCollector()
+	collector := testingutil.GetMetricsCollector()
 	session := collector.StartTest("ConnectionPoolOptimizationTest", "pool", "optimization")
 
 	// 最適化実行
@@ -298,7 +326,7 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	err = optimizer.OptimizeConnections(ctx)
 	duration := time.Since(start)
 
-	session.AddAssertion("optimization_success", err == nil)
+	session.AddAssertion(err == nil)
 	session.SetMetadata("optimization_duration_ms", fmt.Sprintf("%d", duration.Milliseconds()))
 
 	// 現在のプール状態をメタデータに記録
@@ -308,9 +336,9 @@ func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
 	session.SetMetadata("cpu_usage", fmt.Sprintf("%.1f", resources.CPUUsage*100))
 
 	if err == nil {
-		session.End(testconfig.StatusPassed, "")
+		session.End(testingutil.StatusPassed, "")
 	} else {
-		session.End(testconfig.StatusFailed, err.Error())
+		session.End(testingutil.StatusFailed, err.Error())
 	}
 
 	t.Logf("📊 接続プール最適化メトリクス記録完了")

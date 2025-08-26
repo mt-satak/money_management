@@ -19,6 +19,10 @@ import (
 
 // TestSetupTestDB_Success テスト用データベースのセットアップが正常に完了することを検証（エラーなしとDB接続の確立を期待）
 func TestSetupTestDB_Success(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用MySQLデータベースを使用
@@ -47,6 +51,10 @@ func TestSetupTestDB_Success(t *testing.T) {
 
 // TestGetDB_ReturnsCorrectInstance GetDB関数が正しいデータベースインスタンスを返すことを検証（設定されたDBインスタンスの返却を期待）
 func TestGetDB_ReturnsCorrectInstance(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用データベースを作成
@@ -73,6 +81,10 @@ func TestGetDB_ReturnsCorrectInstance(t *testing.T) {
 
 // TestDatabase_ModelOperations データベースで基本的なモデル操作が正常に動作することを検証（CRUD操作の成功を期待）
 func TestDatabase_ModelOperations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用データベースセットアップ
@@ -155,6 +167,10 @@ func TestDatabase_ModelOperations(t *testing.T) {
 
 // TestDatabase_Constraints データベースの制約が正しく適用されることを検証（ユニーク制約違反エラーの発生を期待）
 func TestDatabase_Constraints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用データベースセットアップ
@@ -190,6 +206,10 @@ func TestDatabase_Constraints(t *testing.T) {
 
 // TestDatabase_Timestamps データベースのタイムスタンプが正しく設定されることを検証（作成日時と更新日時の自動設定を期待）
 func TestDatabase_Timestamps(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用データベースセットアップ
@@ -233,6 +253,10 @@ func TestDatabase_Timestamps(t *testing.T) {
 
 // TestDatabase_CascadeDelete カスケード削除が正しく動作することを検証（親レコード削除時の子レコード削除を期待）
 func TestDatabase_CascadeDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	// テスト用データベースセットアップ
@@ -343,6 +367,10 @@ func TestGetDB_ReturnsNil(t *testing.T) {
 
 // TestCleanupTestDB_DatabaseError データベースエラー時のCleanupTestDBをテスト
 func TestCleanupTestDB_DatabaseError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err)
 
@@ -362,6 +390,10 @@ func TestCleanupTestDB_DatabaseError(t *testing.T) {
 
 // TestSetupTestDB_TableCreationVerification テーブル作成の確認テスト
 func TestSetupTestDB_TableCreationVerification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	db, err := SetupTestDB()
@@ -387,6 +419,10 @@ func TestSetupTestDB_TableCreationVerification(t *testing.T) {
 
 // TestCleanupTestDB_MultipleTables 複数テーブルのクリーンアップテスト
 func TestCleanupTestDB_MultipleTables(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	// データベーステストは並列化を無効にして安定性を重視
 
 	db, err := SetupTestDB()

@@ -27,6 +27,11 @@ func main() {
 	}
 	time.Local = loc
 
+	// JWT秘密鍵の初期化確認
+	if _, err := middleware.GetJWTSecret(); err != nil {
+		log.Fatal("JWT秘密鍵の取得に失敗しました:", err)
+	}
+
 	// データベース接続を初期化
 	if err := database.Init(); err != nil {
 		log.Fatal("データベースに接続できませんでした:", err)
