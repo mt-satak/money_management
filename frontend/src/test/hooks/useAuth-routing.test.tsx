@@ -4,6 +4,7 @@ import { renderHook, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "../../hooks/useAuth";
 import { LoginRequest, RegisterRequest, User } from "../../types";
+import { api } from "../../services/api";
 
 // useNavigateをモック
 const mockNavigate = vi.fn();
@@ -15,7 +16,16 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-// APIのモック
+// APIのモック - ファクトリ関数で定義
+vi.mock("../../services/api", () => ({
+  api: {
+    login: vi.fn(),
+    register: vi.fn(),
+    getMe: vi.fn(),
+  },
+}));
+
+// APIレスポンスのモック
 const mockLoginResponse = {
   token: "mock-token",
   user: {
@@ -38,16 +48,6 @@ const mockRegisterResponse = {
   } as User,
 };
 
-const mockApi = {
-  login: vi.fn(),
-  register: vi.fn(),
-  getMe: vi.fn(),
-};
-
-vi.mock("../../services/api", () => ({
-  api: mockApi,
-}));
-
 // localStorageのモック
 const mockLocalStorage = {
   getItem: vi.fn(),
@@ -66,6 +66,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe("useAuth - ルーティング修正テスト", () => {
+  const mockApi = vi.mocked(api);
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
