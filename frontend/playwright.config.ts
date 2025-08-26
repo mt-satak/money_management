@@ -42,7 +42,6 @@ export default defineConfig({
     /* Optimized for parallel execution */
     launchOptions: {
       args: [
-        "--disable-extensions",
         "--disable-gpu",
         "--disable-web-security",
         "--allow-running-insecure-content",
