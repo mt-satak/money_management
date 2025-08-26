@@ -52,6 +52,10 @@ func TestConnectionPoolOptimization_BasicFunctionality(t *testing.T) {
 
 // TestConnectionPoolOptimization_ConfigurationUpdate 設定更新テスト
 func TestConnectionPoolOptimization_ConfigurationUpdate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -89,6 +93,10 @@ func TestConnectionPoolOptimization_ConfigurationUpdate(t *testing.T) {
 
 // TestConnectionPoolOptimization_AutoOptimization 自動最適化テスト
 func TestConnectionPoolOptimization_AutoOptimization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -128,6 +136,10 @@ func TestConnectionPoolOptimization_AutoOptimization(t *testing.T) {
 
 // TestConnectionPoolOptimization_LoadBasedOptimization 負荷ベース最適化テスト
 func TestConnectionPoolOptimization_LoadBasedOptimization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -167,6 +179,10 @@ func TestConnectionPoolOptimization_LoadBasedOptimization(t *testing.T) {
 
 // TestConnectionPoolOptimization_EnvironmentSpecific 環境別設定テスト
 func TestConnectionPoolOptimization_EnvironmentSpecific(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	testCases := []struct {
 		name        string
 		useInMemory bool
@@ -234,6 +250,10 @@ func TestConnectionPoolOptimization_EnvironmentSpecific(t *testing.T) {
 
 // TestConnectionPoolOptimization_PerformanceBenchmark パフォーマンスベンチマーク
 func TestConnectionPoolOptimization_PerformanceBenchmark(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
@@ -286,6 +306,10 @@ func measureConnectionPerformance(t *testing.T, db *gorm.DB, phase string, query
 
 // TestConnectionPoolOptimization_MetricsExport メトリクスエクスポートテスト
 func TestConnectionPoolOptimization_MetricsExport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("データベース接続が必要なためスキップ（-shortフラグ使用時）")
+	}
+
 	db, err := SetupTestDB()
 	assert.NoError(t, err, "テストDB作成失敗")
 	defer CleanupTestDB(db)
