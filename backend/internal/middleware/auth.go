@@ -20,8 +20,8 @@ type Claims struct {
 // GetJWTSecret JWTシークレットキーを環境変数またはDocker Secretsから安全に取得する
 // 1. Docker Secrets (/run/secrets/jwt_secret) を優先的に確認
 // 2. JWT_SECRET環境変数をフォールバック
-// 設定されていない場合はアプリケーションを停止する
-func GetJWTSecret() []byte {
+// 設定されていない場合はエラーを返す（テスト可能）
+func GetJWTSecret() ([]byte, error) {
 	var secret string
 
 	// Docker Secretsから読み込みを試行
@@ -33,7 +33,7 @@ func GetJWTSecret() []byte {
 		// 環境変数からフォールバック
 		secret = os.Getenv("JWT_SECRET")
 		if secret == "" {
-			log.Fatal("JWT_SECRET environment variable or Docker Secret is required but not set. Please set a strong secret key.")
+			return nil, fmt.Errorf("JWT_SECRET environment variable or Docker Secret is required but not set. Please set a strong secret key")
 		}
 		log.Println("📋 JWT Secret loaded from environment variable")
 	}
@@ -43,10 +43,10 @@ func GetJWTSecret() []byte {
 
 	// セキュリティのため、最小長をチェック
 	if len(secret) < 32 {
-		log.Fatal("JWT_SECRET must be at least 32 characters long for security")
+		return nil, fmt.Errorf("JWT_SECRET must be at least 32 characters long for security")
 	}
 
-	return []byte(secret)
+	return []byte(secret), nil
 }
 
 // AuthMiddleware JWT認証ミドルウェア
@@ -79,7 +79,11 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// JWTトークンを解析・検証
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			return GetJWTSecret(), nil
+			secret, err := GetJWTSecret()
+			if err != nil {
+				return nil, err
+			}
+			return secret, nil
 		})
 
 		// トークンが無効またはエラーが発生した場合
