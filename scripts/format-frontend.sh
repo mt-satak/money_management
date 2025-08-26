@@ -46,9 +46,9 @@ done
 # ファイルがある場合のみPrettierを実行
 if [ ${#files[@]} -gt 0 ]; then
     echo "   🚀 Prettierを実行中..."
-    npx --no-install prettier --write "${files[@]}" || {
+    npx prettier --write "${files[@]}" || {
         echo "❌ エラー: Prettierの実行に失敗しました。"
-        echo "   Prettierがローカルにインストールされているか確認してください。"
+        echo "   フロントエンドディレクトリで 'npm install' を実行してください。"
         exit 1
     }
     echo "✅ フロントエンドコードフォーマット完了 (${#files[@]}ファイル処理)"
