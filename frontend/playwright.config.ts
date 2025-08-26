@@ -62,10 +62,7 @@ export default defineConfig({
       name: "webkit",
       use: {
         ...devices["Desktop Safari"],
-        /* WebKit-specific launch options (minimal for compatibility) */
-        launchOptions: {
-          args: ["--disable-web-security", "--allow-running-insecure-content"],
-        },
+        /* WebKit-specific launch options (no custom args for maximum compatibility) */
       },
     },
 
@@ -89,10 +86,7 @@ export default defineConfig({
       name: "Mobile Safari",
       use: {
         ...devices["iPhone 12"],
-        /* Mobile Safari-specific launch options (minimal for compatibility) */
-        launchOptions: {
-          args: ["--disable-web-security", "--allow-running-insecure-content"],
-        },
+        /* Mobile Safari-specific launch options (no custom args for maximum compatibility) */
       },
     },
 
