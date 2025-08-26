@@ -334,8 +334,8 @@ func TestCreateBillHandler_Success(t *testing.T) {
 	var response models.BillResponse
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Equal(t, 2025, response.Year)
-	assert.Equal(t, 1, response.Month)
+	assert.Equal(t, uniqueYear, response.Year)
+	assert.Equal(t, uniqueMonth, response.Month)
 	assert.Equal(t, testData.User1.ID, response.RequesterID)
 	assert.Equal(t, testData.User2.ID, response.PayerID)
 	assert.Equal(t, "pending", response.Status)
