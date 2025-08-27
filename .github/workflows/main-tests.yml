@@ -70,7 +70,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
@@ -89,6 +89,7 @@ jobs:
           done
 
       - name: "Download Go Dependencies"
+        working-directory: backend
         run: |
           echo "📦 Go依存関係をダウンロード中..."
           go mod download
@@ -370,6 +371,7 @@ jobs:
         run: npm ci
 
       - name: "Download Go Dependencies for Security"
+        working-directory: backend
         run: |
           echo "📦 Security用Go依存関係をダウンロード中..."
           go mod download
@@ -429,7 +431,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
@@ -448,6 +450,7 @@ jobs:
           done
 
       - name: "Download Go Dependencies for Performance"
+        working-directory: backend
         run: |
           echo "📦 Performance用Go依存関係をダウンロード中..."
           go mod download
