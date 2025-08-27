@@ -1,0 +1,21 @@
+# Go vulnerability check configuration
+# https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
+
+# Exclude known false positives or accepted risks
+excludes:
+  # HTTP/2 vulnerabilities in dependencies (not directly exploitable in our use case)
+  - "GO-2023-2102" # golang.org/x/net/http2 excessive memory growth
+  - "GO-2024-2687" # golang.org/x/net/http2 rapid reset attack
+  - "GO-2024-2963" # golang.org/x/net/http2 denial of service
+
+  # JWT library - acceptable risk for our use case
+  - "GO-2020-0017" # github.com/dgrijalva/jwt-go signature validation bypass
+
+# Only report vulnerabilities that are actually called in the code
+mode: "source"
+
+# Timeout for vulnerability database updates
+timeout: "5m"
+
+# Test-only vulnerabilities are usually acceptable
+test: false

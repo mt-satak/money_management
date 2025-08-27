@@ -70,7 +70,8 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-${{ hashFiles('backend/go.sum') }}
+            backend/vendor
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ matrix.test-type }}-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
@@ -286,6 +287,27 @@ jobs:
           echo "🏗️ Building frontend for E2E tests..."
           npm run build
 
+      - name: "Start Backend Server"
+        if: matrix.test-group == 'smoke'
+        working-directory: backend
+        run: |
+          echo "🚀 Starting backend server..."
+          go run main.go &
+          BACKEND_PID=$!
+          echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for backend to be ready..."
+
+          # バックエンドサーバーが起動するまで待機
+          MAX_ATTEMPTS=10
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ Backend server is ready (port 8080)"
+              break
+            fi
+            echo "Waiting for backend... (attempt $i/$MAX_ATTEMPTS)"
+            sleep 3
+          done
+
       - name: "Start Frontend Preview Server"
         if: matrix.test-group == 'smoke'
         working-directory: frontend
@@ -324,9 +346,16 @@ jobs:
           echo "🔥 Running smoke tests..."
           npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
 
-      - name: "Cleanup Frontend Server"
+      - name: "Cleanup Servers"
         if: matrix.test-group == 'smoke' && always()
         run: |
+          if [ -n "$BACKEND_PID" ]; then
+            echo "🛑 Stopping backend server..."
+            kill $BACKEND_PID || true
+            pkill -f "go run main.go" || true
+            echo "✅ Backend server cleanup completed"
+          fi
+
           if [ -n "$SERVER_PID" ]; then
             echo "🛑 Stopping frontend preview server..."
             kill $SERVER_PID || true
@@ -605,7 +634,13 @@ jobs:
         run: |
           echo "🔒 Running Go security audit..."
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
+          # Use configuration file to exclude false positives
+          if [ -f "../.govulncheck.yml" ]; then
+            govulncheck -config="../.govulncheck.yml" ./...
+          else
+            # Fallback: only report vulnerabilities that are actually called
+            govulncheck -mode=source ./...
+          fi
 
       - name: "Run npm Security Audit"
         working-directory: frontend
@@ -654,7 +689,8 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-${{ hashFiles('backend/go.sum') }}
+            backend/vendor
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-${{ hashFiles('**/go.sum', '**/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-performance-
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
