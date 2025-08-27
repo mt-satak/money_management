@@ -53,13 +53,11 @@ describe("APIエラーハンドリング統合テスト", () => {
   const openCreateModalAndFillForm = async () => {
     render(<BillsListPage />);
 
-    // データの読み込み完了を待つ
-    await waitFor(() => {
-      expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
-    });
-
-    // 新規作成ボタンをクリック（より堅牢なセレクター使用）
-    const createButton = screen.getByRole("button", { name: /新規作成/ });
+    // データの読み込み完了を待つ（新規作成ボタンが表示されるまで）
+    const createButton = await waitFor(
+      () => screen.getByRole("button", { name: /新規作成/ }),
+      { timeout: 10000 },
+    );
     await user.click(createButton);
 
     const comboboxes = screen.getAllByRole("combobox");
