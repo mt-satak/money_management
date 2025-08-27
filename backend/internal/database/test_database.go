@@ -151,9 +151,21 @@ func dropTablesIfExistsWithRetry(db *gorm.DB) error {
 // createTableWithRetry リトライ機能付きテーブル作成
 func createTableWithRetry(db *gorm.DB, model interface{}) error {
 	for attempt := 1; attempt <= 3; attempt++ {
-		// テーブル存在確認
-		if hasTable := db.Migrator().HasTable(model); hasTable {
-			log.Printf("📋 テーブル既存確認済み %T", model)
+		// より確実なテーブル存在チェック
+		var tableName string
+
+		// 型からテーブル名を取得
+		stmt := &gorm.Statement{DB: db}
+		stmt.Parse(model)
+		expectedTableName := stmt.Schema.Table
+
+		// SHOW TABLES LIKE での存在確認
+		checkSQL := fmt.Sprintf("SHOW TABLES LIKE '%s'", expectedTableName)
+		result := db.Raw(checkSQL).Scan(&tableName)
+
+		// テーブルが確実に存在する場合
+		if result.Error == nil && result.RowsAffected > 0 && tableName != "" {
+			log.Printf("📋 テーブル既存確認済み %T (%s)", model, expectedTableName)
 			return nil
 		}
 
@@ -161,19 +173,27 @@ func createTableWithRetry(db *gorm.DB, model interface{}) error {
 		err := db.AutoMigrate(model)
 		if err == nil {
 			// 作成確認のための短い待機
-			time.Sleep(50 * time.Millisecond)
-			log.Printf("✅ テーブル作成成功 %T", model)
-			return nil
+			time.Sleep(100 * time.Millisecond)
+
+			// 作成後の再確認
+			reCheckResult := db.Raw(checkSQL).Scan(&tableName)
+			if reCheckResult.Error == nil && reCheckResult.RowsAffected > 0 {
+				log.Printf("✅ テーブル作成成功 %T (%s)", model, expectedTableName)
+				return nil
+			}
 		}
 
 		// テーブル存在エラーは成功扱い（競合時の安全策）
-		if strings.Contains(err.Error(), "Error 1050") ||
-			strings.Contains(err.Error(), "already exists") {
-			log.Printf("⚠️ テーブル既存のためスキップ %T", model)
+		if err != nil && (strings.Contains(err.Error(), "Error 1050") ||
+			strings.Contains(err.Error(), "already exists")) {
+			log.Printf("⚠️ テーブル既存のためスキップ %T (%s)", model, expectedTableName)
 			return nil
 		}
 
-		log.Printf("⚠️ テーブル作成失敗 %T (試行 %d/3): %v", model, attempt, err)
+		if err != nil {
+			log.Printf("⚠️ テーブル作成失敗 %T (試行 %d/3): %v", model, attempt, err)
+		}
+
 		if attempt < 3 {
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
