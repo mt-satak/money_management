@@ -217,6 +217,10 @@ func testPreDeploymentValidation(t *testing.T) {
 func TestDatabaseSpecificBugs(t *testing.T) {
 	// 並列実行を無効化してデッドロックを回避
 	t.Run("MySQL_ENUM_Constraint_Bug", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("データベーステストは-shortフラグ使用時はスキップ")
+		}
+
 		// MySQLでのみ発生するENUM制約バグ
 		if database.IsInMemoryDBEnabled() {
 			t.Skip("MySQL固有バグテスト: MySQLが必要")

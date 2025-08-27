@@ -112,10 +112,10 @@ jobs:
         env:
           JWT_SECRET: ${{ env.JWT_SECRET }}
           DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_NAME: money_management_test
+          DB_PORT: 3307
+          DB_NAME: household_budget_test
           DB_USER: root
-          DB_PASSWORD: root_test_password
+          DB_PASSWORD: testpassword
         run: |
           echo "🔄 Running integration tests..."
           go test -v ./internal/handlers/... ./internal/database/...
@@ -703,10 +703,10 @@ jobs:
         env:
           JWT_SECRET: ${{ env.JWT_SECRET }}
           DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_NAME: money_management_test
+          DB_PORT: 3307
+          DB_NAME: household_budget_test
           DB_USER: root
-          DB_PASSWORD: root_test_password
+          DB_PASSWORD: testpassword
         run: |
           echo "⚡ Running performance benchmarks..."
           go test -bench=. -benchmem -run=^$ ./... || echo "No benchmarks found"
