@@ -370,6 +370,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: "Download Go Dependencies for Security"
+        working-directory: backend
+        run: |
+          echo "📦 Security用Go依存関係をダウンロード中..."
+          go mod download
+          go mod tidy
+
       - name: "Run Go Security Audit"
         working-directory: backend
         run: |
@@ -441,6 +448,13 @@ jobs:
             echo "Waiting for MySQL... ($i/30)"
             sleep 2
           done
+
+      - name: "Download Go Dependencies for Performance"
+        working-directory: backend
+        run: |
+          echo "📦 Performance用Go依存関係をダウンロード中..."
+          go mod download
+          go mod tidy
 
       - name: "Run Performance Benchmarks"
         working-directory: backend
