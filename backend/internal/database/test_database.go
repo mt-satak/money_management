@@ -273,15 +273,18 @@ func CleanupTestDB(db *gorm.DB) error {
 	tables := []string{"bill_items", "monthly_bills", "users"}
 
 	for _, table := range tables {
-		// テーブル存在確認
-		var tableExists bool
+		// テーブル存在確認（正しい方法）
+		var tableName string
 		checkSQL := fmt.Sprintf("SHOW TABLES LIKE '%s'", table)
-		if err := db.Raw(checkSQL).Scan(&tableExists).Error; err != nil {
-			log.Printf("⚠️ テーブル存在確認失敗 %s: %v", table, err)
+		result := db.Raw(checkSQL).Scan(&tableName)
+
+		if result.Error != nil {
+			log.Printf("⚠️ テーブル存在確認失敗 %s: %v", table, result.Error)
 			continue
 		}
 
-		// テーブルが存在する場合のみクリーンアップ実行
+		// テーブルが存在する場合のみクリーンアップ実行（行数で判定）
+		tableExists := result.RowsAffected > 0
 		if tableExists {
 			// TRUNCATEでテーブル全体をクリア（AUTO_INCREMENTもリセット）
 			sql := fmt.Sprintf("TRUNCATE TABLE %s", table)
