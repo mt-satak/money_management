@@ -289,12 +289,99 @@ jobs:
             sleep 20
           fi
 
+      - name: "Build Frontend for E2E"
+        if: matrix.test-group == 'smoke'
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for E2E tests..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        if: matrix.test-group == 'smoke'
+        working-directory: frontend
+        run: |
+          echo "🚀 Starting frontend preview server..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for server to be ready..."
+
+          # サーバーが起動するまで指数バックオフで待機
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ Preview server is ready (port ${PREVIEW_PORT})"
+              break
+            fi
+
+            # 指数バックオフ: 1s, 2s, 4s, 8s, 16s, 32s (最大32秒)
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "Waiting for server... (attempt $i/$MAX_ATTEMPTS, waiting ${WAIT_TIME}s)"
+            sleep $WAIT_TIME
+          done
+
       - name: "Run Smoke Tests"
         if: matrix.test-group == 'smoke'
         working-directory: frontend
         run: |
           echo "🔥 Running smoke tests..."
           npx playwright test tests/e2e/basic-ui-test.spec.ts --reporter=list
+
+      - name: "Cleanup Frontend Server"
+        if: matrix.test-group == 'smoke' && always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 Stopping frontend preview server..."
+            kill $SERVER_PID || true
+            sleep 2
+            # 念のため、ポートを使用しているプロセスを強制終了
+            pkill -f "vite.*preview" || true
+            echo "✅ Frontend server cleanup completed"
+          fi
+
+      - name: "Build Frontend for E2E"
+        if: matrix.test-group == 'regression'
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for E2E tests..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        if: matrix.test-group == 'regression'
+        working-directory: frontend
+        run: |
+          echo "🚀 Starting frontend preview server..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for server to be ready..."
+
+          # サーバーが起動するまで指数バックオフで待機
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ Preview server is ready (port ${PREVIEW_PORT})"
+              break
+            fi
+
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "Waiting for server... (attempt $i/$MAX_ATTEMPTS, waiting ${WAIT_TIME}s)"
+            sleep $WAIT_TIME
+          done
 
       - name: "Run Regression Tests"
         if: matrix.test-group == 'regression'
@@ -303,12 +390,108 @@ jobs:
           echo "🔄 Running regression tests..."
           npx playwright test tests/e2e/complete-user-flow.spec.ts --reporter=list
 
+      - name: "Cleanup Frontend Server"
+        if: matrix.test-group == 'regression' && always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 Stopping frontend preview server..."
+            kill $SERVER_PID || true
+            sleep 2
+            pkill -f "vite.*preview" || true
+            echo "✅ Frontend server cleanup completed"
+          fi
+
+      - name: "Build Frontend for E2E"
+        if: matrix.test-group == 'integration'
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for E2E tests..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        if: matrix.test-group == 'integration'
+        working-directory: frontend
+        run: |
+          echo "🚀 Starting frontend preview server..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for server to be ready..."
+
+          # サーバーが起動するまで指数バックオフで待機
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ Preview server is ready (port ${PREVIEW_PORT})"
+              break
+            fi
+
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "Waiting for server... (attempt $i/$MAX_ATTEMPTS, waiting ${WAIT_TIME}s)"
+            sleep $WAIT_TIME
+          done
+
       - name: "Run Integration Tests"
         if: matrix.test-group == 'integration'
         working-directory: frontend
         run: |
           echo "🔗 Running integration tests..."
           npx playwright test tests/e2e/navigation-fixes.spec.ts tests/e2e/payer-bills-display.spec.ts --reporter=list
+
+      - name: "Cleanup Frontend Server"
+        if: matrix.test-group == 'integration' && always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 Stopping frontend preview server..."
+            kill $SERVER_PID || true
+            sleep 2
+            pkill -f "vite.*preview" || true
+            echo "✅ Frontend server cleanup completed"
+          fi
+
+      - name: "Build Frontend for E2E"
+        if: matrix.test-group == 'visual'
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for E2E tests..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        if: matrix.test-group == 'visual'
+        working-directory: frontend
+        run: |
+          echo "🚀 Starting frontend preview server..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for server to be ready..."
+
+          # サーバーが起動するまで指数バックオフで待機
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ Preview server is ready (port ${PREVIEW_PORT})"
+              break
+            fi
+
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "Waiting for server... (attempt $i/$MAX_ATTEMPTS, waiting ${WAIT_TIME}s)"
+            sleep $WAIT_TIME
+          done
 
       - name: "Run Visual Regression Tests"
         if: matrix.test-group == 'visual'
@@ -319,12 +502,71 @@ jobs:
           echo "👁️ Running visual regression tests..."
           npx playwright test tests/e2e/visual-regression.spec.ts --reporter=list
 
+      - name: "Cleanup Frontend Server"
+        if: matrix.test-group == 'visual' && always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 Stopping frontend preview server..."
+            kill $SERVER_PID || true
+            sleep 2
+            pkill -f "vite.*preview" || true
+            echo "✅ Frontend server cleanup completed"
+          fi
+
+      - name: "Build Frontend for E2E"
+        if: matrix.test-group == 'performance'
+        working-directory: frontend
+        run: |
+          echo "🏗️ Building frontend for E2E tests..."
+          npm run build
+
+      - name: "Start Frontend Preview Server"
+        if: matrix.test-group == 'performance'
+        working-directory: frontend
+        run: |
+          echo "🚀 Starting frontend preview server..."
+          npm run preview &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "⏰ Waiting for server to be ready..."
+
+          # サーバーが起動するまで指数バックオフで待機
+          PREVIEW_PORT=${PREVIEW_PORT:-4173}
+          MAX_ATTEMPTS=10
+          BASE_WAIT=1
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -f http://localhost:${PREVIEW_PORT}/ > /dev/null 2>&1; then
+              echo "✅ Preview server is ready (port ${PREVIEW_PORT})"
+              break
+            fi
+
+            WAIT_TIME=$((BASE_WAIT * (1 << (i-1))))
+            if [ $WAIT_TIME -gt 32 ]; then
+              WAIT_TIME=32
+            fi
+
+            echo "Waiting for server... (attempt $i/$MAX_ATTEMPTS, waiting ${WAIT_TIME}s)"
+            sleep $WAIT_TIME
+          done
+
       - name: "Run Performance Tests"
         if: matrix.test-group == 'performance'
         working-directory: frontend
         run: |
           echo "⚡ Running performance tests..."
           npx playwright test tests/e2e/test-suite-optimization.spec.ts --reporter=list
+
+      - name: "Cleanup Frontend Server"
+        if: matrix.test-group == 'performance' && always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            echo "🛑 Stopping frontend preview server..."
+            kill $SERVER_PID || true
+            sleep 2
+            pkill -f "vite.*preview" || true
+            echo "✅ Frontend server cleanup completed"
+          fi
 
       - name: "Upload Playwright Report"
         uses: actions/upload-artifact@v4
