@@ -8,6 +8,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -64,17 +65,39 @@ func SetupTestDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// テスト用テーブル作成（本番と同じモデルを使用）
-	err = db.AutoMigrate(
-		&models.User{},
-		&models.MonthlyBill{},
-		&models.BillItem{},
-	)
+	// テスト用テーブル作成（安全な初期化）
+	err = safeAutoMigrate(db)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("テーブル作成エラー: %v", err)
 	}
 
 	return db, nil
+}
+
+// safeAutoMigrate テーブルの安全な作成（既存テーブルとの競合回避）
+func safeAutoMigrate(db *gorm.DB) error {
+	// マイグレーションを順次実行（競合回避のため）
+	models := []interface{}{
+		&models.User{},
+		&models.MonthlyBill{},
+		&models.BillItem{},
+	}
+
+	for _, model := range models {
+		// 各テーブルを個別にマイグレーション
+		err := db.AutoMigrate(model)
+		if err != nil {
+			// テーブル存在エラー（Error 1050）は無視
+			if strings.Contains(err.Error(), "Error 1050") ||
+				strings.Contains(err.Error(), "already exists") {
+				log.Printf("⚠️  テーブル既存のためスキップ: %v", err)
+				continue
+			}
+			return fmt.Errorf("マイグレーション失敗 %T: %v", model, err)
+		}
+	}
+
+	return nil
 }
 
 // isDeadlockError デッドロックエラーかどうかを判定
@@ -153,15 +176,20 @@ func CleanupTestDB(db *gorm.DB) error {
 		return err
 	}
 
-	// 外部キー制約を無効化したので順序を気にせずに削除可能
-	if err := executeWithDeadlockRetry(db, "DELETE FROM bill_items", maxRetries); err != nil {
-		return err
-	}
-	if err := executeWithDeadlockRetry(db, "DELETE FROM monthly_bills", maxRetries); err != nil {
-		return err
-	}
-	if err := executeWithDeadlockRetry(db, "DELETE FROM users", maxRetries); err != nil {
-		return err
+	// テーブル全体のクリーンアップ（TRUNCATE使用で高速化と重複回避）
+	tables := []string{"bill_items", "monthly_bills", "users"}
+
+	for _, table := range tables {
+		// TRUNCATEでテーブル全体をクリア（AUTO_INCREMENTもリセット）
+		sql := fmt.Sprintf("TRUNCATE TABLE %s", table)
+		if err := executeWithDeadlockRetry(db, sql, maxRetries); err != nil {
+			// TRUNCATE失敗時はDELETEにフォールバック
+			log.Printf("⚠️  TRUNCATE失敗、DELETEでフォールバック: %s", table)
+			fallbackSQL := fmt.Sprintf("DELETE FROM %s", table)
+			if fallbackErr := executeWithDeadlockRetry(db, fallbackSQL, maxRetries); fallbackErr != nil {
+				return fmt.Errorf("テーブル%sのクリーンアップ失敗: %v", table, fallbackErr)
+			}
+		}
 	}
 
 	// AUTO_INCREMENTをリセット（デッドロック回避機構付き）
@@ -181,4 +209,45 @@ func CleanupTestDB(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+// GenerateUniqueTestID テスト用のユニークID生成（重複回避）
+func GenerateUniqueTestID(prefix string) string {
+	timestamp := time.Now().UnixNano()
+	randomPart := rand.Int63()
+	return fmt.Sprintf("%s_%d_%d", prefix, timestamp, randomPart)
+}
+
+// SafeCreateTestUser 重複回避機能付きテストユーザー作成
+func SafeCreateTestUser(db *gorm.DB, baseName string) (*models.User, error) {
+	maxAttempts := 5
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		// ユニークなaccount_idを生成
+		accountID := GenerateUniqueTestID(baseName)
+
+		user := &models.User{
+			Name:         fmt.Sprintf("%s_%d", baseName, attempt),
+			AccountID:    accountID,
+			PasswordHash: "test_password_hash",
+		}
+
+		err := db.Create(user).Error
+		if err == nil {
+			return user, nil
+		}
+
+		// 重複エラー（Error 1062）の場合はリトライ
+		if strings.Contains(err.Error(), "Error 1062") ||
+			strings.Contains(err.Error(), "Duplicate entry") {
+			log.Printf("⚠️  重複エラー - リトライ %d/%d: %s", attempt, maxAttempts, accountID)
+			time.Sleep(time.Duration(attempt*10) * time.Millisecond)
+			continue
+		}
+
+		// その他のエラーは即座に返す
+		return nil, fmt.Errorf("ユーザー作成失敗: %v", err)
+	}
+
+	return nil, fmt.Errorf("最大試行回数(%d)に達しました - ユニークなユーザー作成に失敗", maxAttempts)
 }
