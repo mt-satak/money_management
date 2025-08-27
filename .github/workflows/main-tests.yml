@@ -118,7 +118,7 @@ jobs:
           DB_PASSWORD: test_password
         run: |
           echo "🔄 Running integration tests..."
-          go test -v ./internal/handlers/... ./internal/database/...
+          go test -v -p=1 -parallel=1 -timeout=10m ./internal/handlers/... ./internal/database/...
 
       - name: "Run Contract Tests"
         if: matrix.test-type == 'contract'
