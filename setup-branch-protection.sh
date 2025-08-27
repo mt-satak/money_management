@@ -80,7 +80,20 @@ setup_branch_protection() {
     PROTECTION_JSON='{
   "required_status_checks": {
     "strict": true,
-    "contexts": []
+    "checks": [
+      {
+        "context": "Backend Tests"
+      },
+      {
+        "context": "Frontend Tests"
+      },
+      {
+        "context": "E2E Smoke Tests"
+      },
+      {
+        "context": "Code Quality"
+      }
+    ]
   },
   "enforce_admins": false,
   "required_pull_request_reviews": null,
@@ -132,7 +145,11 @@ verify_settings() {
     if [[ "$PROTECTION_STATUS" != "null" ]]; then
         log_success "✅ ブランチプロテクション: 有効"
         log_info "   └─ PR必須: 有効"
-        log_info "   └─ ステータスチェック: 存在するもの全て必須"
+        log_info "   └─ ステータスチェック必須:"
+        log_info "       • Backend Tests"
+        log_info "       • Frontend Tests"
+        log_info "       • E2E Smoke Tests"
+        log_info "       • Code Quality"
         log_info "   └─ 管理者例外: 無効"
         log_info "   └─ フォースプッシュ: 無効"
     else
@@ -162,7 +179,11 @@ main() {
     echo ""
     log_info "以下の設定を適用します:"
     log_info "• PR必須（直接pushを禁止）"
-    log_info "• ステータスチェック必須（存在するチェックのみ）"
+    log_info "• ステータスチェック必須："
+    log_info "  - Backend Tests"
+    log_info "  - Frontend Tests"
+    log_info "  - E2E Smoke Tests"
+    log_info "  - Code Quality"
     log_info "• 管理者例外なし"
     log_info "• フォースプッシュ・削除禁止"
     log_info "• PRマージ後の自動ブランチ削除"
