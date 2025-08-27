@@ -260,8 +260,8 @@ describe("BillsListPage - 重複チェック機能", () => {
       expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
     });
 
-    // 新規作成ボタンをクリック
-    const createButton = screen.getByText("+ 新規作成");
+    // 新規作成ボタンをクリック（より堅牢なセレクター使用）
+    const createButton = screen.getByRole("button", { name: /新規作成/ });
     await user.click(createButton);
 
     // モーダルが開かれることを確認
