@@ -64,6 +64,51 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: "🔍 Debug: File Structure Analysis"
+        run: |
+          echo "=== Current Working Directory ==="
+          pwd
+          echo ""
+          echo "=== Repository Root Contents ==="
+          ls -la
+          echo ""
+          echo "=== Looking for go.sum files ==="
+          find . -name "go.sum" -type f | head -10
+          echo ""
+          echo "=== Looking for go.mod files ==="
+          find . -name "go.mod" -type f | head -10
+          echo ""
+          echo "=== Backend Directory Contents ==="
+          if [ -d "backend" ]; then
+            ls -la backend/
+          else
+            echo "Backend directory not found!"
+          fi
+          echo ""
+          echo "=== HashFiles Debug ==="
+          echo "hashFiles('backend/go.sum') would look for: backend/go.sum"
+          if [ -f "backend/go.sum" ]; then
+            echo "✅ backend/go.sum EXISTS"
+            echo "File size: $(wc -c < backend/go.sum) bytes"
+          else
+            echo "❌ backend/go.sum NOT FOUND"
+          fi
+
+      - name: "🔍 Debug: Cache Key Analysis"
+        run: |
+          echo "=== Cache Key Debug ==="
+          echo "Matrix test-type: ${{ matrix.test-type }}"
+          echo "GO_VERSION: ${{ env.GO_VERSION }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo ""
+          echo "=== HashFiles Test ==="
+          if [ -f "backend/go.sum" ]; then
+            echo "Calculating hash for backend/go.sum..."
+            sha256sum backend/go.sum | cut -d' ' -f1
+          else
+            echo "❌ Cannot calculate hash - backend/go.sum missing"
+          fi
+
       - name: "Cache Go Modules"
         uses: actions/cache@v4
         with:
@@ -88,12 +133,23 @@ jobs:
             sleep 2
           done
 
-      - name: "Download Go Dependencies"
+      - name: "📦 Download Go Dependencies"
         working-directory: backend
         run: |
           echo "📦 Go依存関係をダウンロード中..."
-          go mod download
-          go mod tidy
+          echo "Current working directory: $(pwd)"
+          echo "Contents of current directory:"
+          ls -la
+          echo ""
+          if [ -f "go.mod" ]; then
+            echo "✅ go.mod found in backend directory"
+            go mod download
+            go mod tidy
+            echo "✅ Dependencies downloaded successfully"
+          else
+            echo "❌ go.mod not found in backend directory!"
+            exit 1
+          fi
 
       - name: "Run Unit Tests"
         if: matrix.test-type == 'unit'

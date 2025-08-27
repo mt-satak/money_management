@@ -1,0 +1,145 @@
+# =======================================================
+# Debug Workflow - パス構造問題調査用
+# =======================================================
+
+name: "🔍 Debug: Path Structure Analysis"
+
+on:
+  push:
+    branches: [hotfix/github-actions-path-debug]
+  workflow_dispatch:
+
+env:
+  GO_VERSION: "1.23"
+
+jobs:
+  debug-paths:
+    name: "🔍 Path Structure Debug"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "🔍 Complete Environment Analysis"
+        run: |
+          echo "=========================================="
+          echo "🔍 COMPLETE GITHUB ACTIONS ENVIRONMENT DEBUG"
+          echo "=========================================="
+          echo ""
+
+          echo "=== Basic Environment ==="
+          echo "PWD: $(pwd)"
+          echo "HOME: $HOME"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "Runner OS: ${{ runner.os }}"
+          echo ""
+
+          echo "=== Repository Structure ==="
+          echo "Repository root contents:"
+          ls -la
+          echo ""
+
+          echo "=== Go Files Search ==="
+          echo "All go.mod files:"
+          find . -name "go.mod" -type f 2>/dev/null || echo "No go.mod files found"
+          echo ""
+          echo "All go.sum files:"
+          find . -name "go.sum" -type f 2>/dev/null || echo "No go.sum files found"
+          echo ""
+
+          echo "=== Backend Directory Analysis ==="
+          if [ -d "backend" ]; then
+            echo "✅ backend directory exists"
+            echo "Contents of backend/:"
+            ls -la backend/
+            echo ""
+
+            if [ -f "backend/go.mod" ]; then
+              echo "✅ backend/go.mod EXISTS"
+              echo "File size: $(stat -c%s backend/go.mod 2>/dev/null || stat -f%z backend/go.mod) bytes"
+              echo "First few lines:"
+              head -5 backend/go.mod
+            else
+              echo "❌ backend/go.mod NOT FOUND"
+            fi
+            echo ""
+
+            if [ -f "backend/go.sum" ]; then
+              echo "✅ backend/go.sum EXISTS"
+              echo "File size: $(stat -c%s backend/go.sum 2>/dev/null || stat -f%z backend/go.sum) bytes"
+              echo "Line count: $(wc -l < backend/go.sum)"
+              echo "SHA256: $(sha256sum backend/go.sum | cut -d' ' -f1)"
+            else
+              echo "❌ backend/go.sum NOT FOUND"
+            fi
+          else
+            echo "❌ backend directory NOT FOUND"
+          fi
+          echo ""
+
+          echo "=== HashFiles Simulation ==="
+          echo "Testing hashFiles('backend/go.sum'):"
+          if [ -f "backend/go.sum" ]; then
+            echo "✅ File exists, hash would be calculated"
+            echo "Manual hash: $(sha256sum backend/go.sum | cut -d' ' -f1)"
+          else
+            echo "❌ File missing, hashFiles would return empty string"
+          fi
+          echo ""
+
+          echo "=== Cache Key Simulation ==="
+          SIMULATED_KEY="${{ runner.os }}-go-${{ env.GO_VERSION }}-unit-$([ -f backend/go.sum ] && sha256sum backend/go.sum | cut -d' ' -f1 || echo 'MISSING')"
+          echo "Simulated cache key: $SIMULATED_KEY"
+          echo ""
+
+          echo "=== Directory Tree ==="
+          echo "Full directory tree (max 3 levels):"
+          tree -L 3 . 2>/dev/null || find . -type d -name ".*" -prune -o -type d -print | head -20
+
+      - name: "Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: "🔍 Go Environment Check"
+        run: |
+          echo "=== Go Environment ==="
+          echo "Go version: $(go version)"
+          echo "GOPATH: $GOPATH"
+          echo "GOROOT: $GOROOT"
+          echo ""
+
+          echo "=== Go Module Test ==="
+          if [ -d "backend" ] && [ -f "backend/go.mod" ]; then
+            cd backend
+            echo "Changed to backend directory: $(pwd)"
+            echo "Testing go mod commands..."
+            go mod download -x || echo "go mod download failed"
+            echo "Dependencies downloaded"
+          else
+            echo "Cannot test Go modules - missing backend/go.mod"
+          fi
+
+      - name: "🔍 Cache Test"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-debug-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-debug-
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            ${{ runner.os }}-go-
+
+      - name: "🔍 Post-Cache Analysis"
+        run: |
+          echo "=== Cache Result Analysis ==="
+          echo "Cache key used: ${{ runner.os }}-go-${{ env.GO_VERSION }}-debug-${{ hashFiles('backend/go.sum') }}"
+          echo "HashFiles result: '${{ hashFiles('backend/go.sum') }}'"
+          if [ -z "${{ hashFiles('backend/go.sum') }}" ]; then
+            echo "⚠️  hashFiles returned EMPTY STRING - this is the problem!"
+          else
+            echo "✅ hashFiles returned a value"
+          fi
