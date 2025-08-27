@@ -60,7 +60,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
             ${{ runner.os }}-go-
@@ -78,7 +78,6 @@ jobs:
           done
 
       - name: "Download Go Dependencies"
-        working-directory: backend
         run: |
           echo "📦 Go依存関係をダウンロード中..."
           go mod download
