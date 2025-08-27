@@ -74,9 +74,20 @@ func SetupTestDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-// safeAutoMigrate テーブルの安全な作成（既存テーブルとの競合回避）
+// safeAutoMigrate テーブルの安全な作成（安定性優先・非並列対応）
 func safeAutoMigrate(db *gorm.DB) error {
-	// マイグレーションを順次実行（競合回避のため）
+	// Phase 1: 完全なデータベースリセット（安定性優先）
+	if err := dropTablesIfExistsWithRetry(db); err != nil {
+		log.Printf("⚠️ テーブル削除時エラー: %v", err)
+		// 削除エラーは無視して続行
+	}
+
+	// Phase 2: 接続状態確認
+	if err := verifyDatabaseConnection(db); err != nil {
+		return fmt.Errorf("データベース接続確認失敗: %v", err)
+	}
+
+	// Phase 3: マイグレーション実行（リトライ機能付き）
 	models := []interface{}{
 		&models.User{},
 		&models.MonthlyBill{},
@@ -84,19 +95,72 @@ func safeAutoMigrate(db *gorm.DB) error {
 	}
 
 	for _, model := range models {
-		// 各テーブルを個別にマイグレーション
-		err := db.AutoMigrate(model)
-		if err != nil {
-			// テーブル存在エラー（Error 1050）は無視
-			if strings.Contains(err.Error(), "Error 1050") ||
-				strings.Contains(err.Error(), "already exists") {
-				log.Printf("⚠️  テーブル既存のためスキップ: %v", err)
-				continue
-			}
-			return fmt.Errorf("マイグレーション失敗 %T: %v", model, err)
+		if err := createTableWithRetry(db, model); err != nil {
+			return fmt.Errorf("テーブル作成失敗 %T: %v", model, err)
 		}
 	}
 
+	log.Printf("✅ 統合テスト用データベース初期化完了")
+	return nil
+}
+
+// dropTablesIfExistsWithRetry リトライ機能付きテーブル削除
+func dropTablesIfExistsWithRetry(db *gorm.DB) error {
+	tables := []string{"bill_items", "monthly_bills", "users"}
+
+	for attempt := 1; attempt <= 3; attempt++ {
+		success := true
+		for _, table := range tables {
+			if err := db.Exec("DROP TABLE IF EXISTS " + table).Error; err != nil {
+				log.Printf("⚠️ テーブル削除失敗 %s (試行 %d/3): %v", table, attempt, err)
+				success = false
+				if attempt < 3 {
+					time.Sleep(time.Duration(attempt) * time.Second)
+				}
+				break
+			}
+		}
+		if success {
+			log.Printf("🧹 統合テスト用テーブル削除完了")
+			return nil
+		}
+	}
+
+	return fmt.Errorf("テーブル削除が3回失敗しました")
+}
+
+// createTableWithRetry リトライ機能付きテーブル作成
+func createTableWithRetry(db *gorm.DB, model interface{}) error {
+	for attempt := 1; attempt <= 3; attempt++ {
+		err := db.AutoMigrate(model)
+		if err == nil {
+			return nil
+		}
+
+		// テーブル存在エラーは成功扱い
+		if strings.Contains(err.Error(), "Error 1050") ||
+			strings.Contains(err.Error(), "already exists") {
+			log.Printf("⚠️ テーブル既存のためスキップ %T", model)
+			return nil
+		}
+
+		log.Printf("⚠️ テーブル作成失敗 %T (試行 %d/3): %v", model, attempt, err)
+		if attempt < 3 {
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
+	}
+
+	return fmt.Errorf("テーブル作成が3回失敗しました")
+}
+
+// verifyDatabaseConnection データベース接続状態確認
+func verifyDatabaseConnection(db *gorm.DB) error {
+	if sqlDB, err := db.DB(); err == nil {
+		if err := sqlDB.Ping(); err != nil {
+			return fmt.Errorf("データベースPing失敗: %v", err)
+		}
+		log.Printf("📡 データベース接続確認済み")
+	}
 	return nil
 }
 
