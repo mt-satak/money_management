@@ -104,27 +104,46 @@ func safeAutoMigrate(db *gorm.DB) error {
 	return nil
 }
 
-// dropTablesIfExistsWithRetry リトライ機能付きテーブル削除
+// dropTablesIfExistsWithRetry リトライ機能付きテーブル削除（外部キー制約考慮）
 func dropTablesIfExistsWithRetry(db *gorm.DB) error {
+	// 外部キー制約を一時的に無効化
+	if err := db.Exec("SET FOREIGN_KEY_CHECKS = 0").Error; err != nil {
+		log.Printf("⚠️ 外部キー制約無効化失敗: %v", err)
+	}
+
+	// 外部キー制約の逆順でテーブル削除
 	tables := []string{"bill_items", "monthly_bills", "users"}
 
 	for attempt := 1; attempt <= 3; attempt++ {
-		success := true
+		allDeleted := true
+
 		for _, table := range tables {
 			if err := db.Exec("DROP TABLE IF EXISTS " + table).Error; err != nil {
 				log.Printf("⚠️ テーブル削除失敗 %s (試行 %d/3): %v", table, attempt, err)
-				success = false
-				if attempt < 3 {
-					time.Sleep(time.Duration(attempt) * time.Second)
-				}
-				break
+				allDeleted = false
 			}
 		}
-		if success {
+
+		if allDeleted {
+			// 外部キー制約を再有効化
+			if err := db.Exec("SET FOREIGN_KEY_CHECKS = 1").Error; err != nil {
+				log.Printf("⚠️ 外部キー制約再有効化失敗: %v", err)
+			}
+
+			// テーブル削除確認のための待機
+			time.Sleep(100 * time.Millisecond)
+
 			log.Printf("🧹 統合テスト用テーブル削除完了")
 			return nil
 		}
+
+		if attempt < 3 {
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
 	}
+
+	// 外部キー制約を再有効化（失敗時も）
+	db.Exec("SET FOREIGN_KEY_CHECKS = 1")
 
 	return fmt.Errorf("テーブル削除が3回失敗しました")
 }
@@ -132,12 +151,22 @@ func dropTablesIfExistsWithRetry(db *gorm.DB) error {
 // createTableWithRetry リトライ機能付きテーブル作成
 func createTableWithRetry(db *gorm.DB, model interface{}) error {
 	for attempt := 1; attempt <= 3; attempt++ {
-		err := db.AutoMigrate(model)
-		if err == nil {
+		// テーブル存在確認
+		if hasTable := db.Migrator().HasTable(model); hasTable {
+			log.Printf("📋 テーブル既存確認済み %T", model)
 			return nil
 		}
 
-		// テーブル存在エラーは成功扱い
+		// マイグレーション実行
+		err := db.AutoMigrate(model)
+		if err == nil {
+			// 作成確認のための短い待機
+			time.Sleep(50 * time.Millisecond)
+			log.Printf("✅ テーブル作成成功 %T", model)
+			return nil
+		}
+
+		// テーブル存在エラーは成功扱い（競合時の安全策）
 		if strings.Contains(err.Error(), "Error 1050") ||
 			strings.Contains(err.Error(), "already exists") {
 			log.Printf("⚠️ テーブル既存のためスキップ %T", model)
@@ -244,15 +273,28 @@ func CleanupTestDB(db *gorm.DB) error {
 	tables := []string{"bill_items", "monthly_bills", "users"}
 
 	for _, table := range tables {
-		// TRUNCATEでテーブル全体をクリア（AUTO_INCREMENTもリセット）
-		sql := fmt.Sprintf("TRUNCATE TABLE %s", table)
-		if err := executeWithDeadlockRetry(db, sql, maxRetries); err != nil {
-			// TRUNCATE失敗時はDELETEにフォールバック
-			log.Printf("⚠️  TRUNCATE失敗、DELETEでフォールバック: %s", table)
-			fallbackSQL := fmt.Sprintf("DELETE FROM %s", table)
-			if fallbackErr := executeWithDeadlockRetry(db, fallbackSQL, maxRetries); fallbackErr != nil {
-				return fmt.Errorf("テーブル%sのクリーンアップ失敗: %v", table, fallbackErr)
+		// テーブル存在確認
+		var tableExists bool
+		checkSQL := fmt.Sprintf("SHOW TABLES LIKE '%s'", table)
+		if err := db.Raw(checkSQL).Scan(&tableExists).Error; err != nil {
+			log.Printf("⚠️ テーブル存在確認失敗 %s: %v", table, err)
+			continue
+		}
+
+		// テーブルが存在する場合のみクリーンアップ実行
+		if tableExists {
+			// TRUNCATEでテーブル全体をクリア（AUTO_INCREMENTもリセット）
+			sql := fmt.Sprintf("TRUNCATE TABLE %s", table)
+			if err := executeWithDeadlockRetry(db, sql, maxRetries); err != nil {
+				// TRUNCATE失敗時はDELETEにフォールバック
+				log.Printf("⚠️ TRUNCATE失敗、DELETEでフォールバック: %s", table)
+				fallbackSQL := fmt.Sprintf("DELETE FROM %s", table)
+				if fallbackErr := executeWithDeadlockRetry(db, fallbackSQL, maxRetries); fallbackErr != nil {
+					log.Printf("⚠️ テーブル%sのクリーンアップ失敗（無視して続行）: %v", table, fallbackErr)
+				}
 			}
+		} else {
+			log.Printf("📋 テーブル%sは存在しないためスキップ", table)
 		}
 	}
 
