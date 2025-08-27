@@ -89,10 +89,10 @@ jobs:
         env:
           JWT_SECRET: ${{ env.JWT_SECRET }}
           DB_HOST: 127.0.0.1
-          DB_PORT: 3307
-          DB_NAME: household_budget_test
-          DB_USER: root
-          DB_PASSWORD: testpassword
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: test_user
+          DB_PASSWORD: test_password
         run: |
           echo "🧪 Running backend tests..."
           go test -v -short ./...
@@ -102,10 +102,10 @@ jobs:
         env:
           JWT_SECRET: ${{ env.JWT_SECRET }}
           DB_HOST: 127.0.0.1
-          DB_PORT: 3307
-          DB_NAME: household_budget_test
-          DB_USER: root
-          DB_PASSWORD: testpassword
+          DB_PORT: 3306
+          DB_NAME: money_management_test
+          DB_USER: test_user
+          DB_PASSWORD: test_password
         run: |
           echo "📊 Running tests with coverage..."
           go test -v -short -coverprofile=coverage.out ./...
